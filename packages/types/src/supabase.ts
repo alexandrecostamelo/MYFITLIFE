@@ -216,6 +216,19 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      weight_logs: {
+        Row: {
+          id: string;
+          user_id: string;
+          weight_kg: number;
+          body_fat_percent: number | null;
+          logged_at: string;
+          notes: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};

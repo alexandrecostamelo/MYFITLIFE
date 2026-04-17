@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2 } from 'lucide-react';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -30,11 +32,22 @@ export default function ProfilePage() {
 
       {profile && (
         <Card className="mb-4 p-4">
-          <div className="text-lg font-medium">{profile.full_name}</div>
-          <div className="mt-2 text-sm text-muted-foreground">
+          <div className="mb-3 flex items-start justify-between">
+            <div>
+              <div className="text-lg font-medium">{profile.full_name}</div>
+              {(profile.city || profile.state) && (
+                <div className="text-xs text-muted-foreground">{[profile.city, profile.state].filter(Boolean).join(', ')}</div>
+              )}
+            </div>
+            <Link href="/app/profile/edit" className="rounded p-2 hover:bg-slate-100">
+              <Pencil className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="space-y-1 text-sm text-muted-foreground">
             <div>Objetivo: {profile.primary_goal}</div>
             <div>Nível: {profile.experience_level}</div>
             <div>Tom do coach: {profile.coach_tone}</div>
+            <div>Peso atual: {profile.current_weight_kg ? `${profile.current_weight_kg} kg` : '---'}</div>
           </div>
         </Card>
       )}
@@ -50,6 +63,44 @@ export default function ProfilePage() {
           </div>
         </Card>
       )}
+
+      <Card className="mb-4 divide-y">
+        <Link href="/app/profile/edit" className="flex items-center justify-between p-4 hover:bg-slate-50">
+          <div className="flex items-center gap-3">
+            <Pencil className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Editar perfil</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+        <Link href="/app/weight" className="flex items-center justify-between p-4 hover:bg-slate-50">
+          <div className="flex items-center gap-3">
+            <Scale className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Registro de peso</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+        <Link href="/termos" className="flex items-center justify-between p-4 hover:bg-slate-50">
+          <div className="flex items-center gap-3">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Termos de uso</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+        <Link href="/privacidade" className="flex items-center justify-between p-4 hover:bg-slate-50">
+          <div className="flex items-center gap-3">
+            <Shield className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Política de privacidade</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+        <Link href="/app/profile/delete" className="flex items-center justify-between p-4 hover:bg-slate-50">
+          <div className="flex items-center gap-3">
+            <Trash2 className="h-4 w-4 text-destructive" />
+            <span className="text-sm text-destructive">Excluir minha conta</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+      </Card>
 
       <Button variant="outline" onClick={logout} className="w-full">Sair</Button>
     </main>
