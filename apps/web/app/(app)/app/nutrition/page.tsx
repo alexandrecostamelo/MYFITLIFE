@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Trash2, Loader2, Camera } from 'lucide-react';
 
 type Food = {
   id: string;
@@ -135,6 +136,16 @@ export default function NutritionPage() {
             <div className="text-xs text-muted-foreground">/{targets.fat}g</div>
           </div>
         </div>
+      </Card>
+
+      <Card className="mb-4 p-4">
+        <h2 className="mb-3 text-sm font-medium">Adicionar rápido</h2>
+        <Button asChild variant="outline" className="w-full h-auto flex-col gap-1 py-3">
+          <Link href="/app/nutrition/photo">
+            <Camera className="h-5 w-5" />
+            <span className="text-xs">Por foto (IA)</span>
+          </Link>
+        </Button>
       </Card>
 
       <Card className="mb-4 p-4">

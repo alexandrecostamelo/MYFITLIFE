@@ -229,6 +229,18 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      ai_usage_logs: {
+        Row: {
+          id: string;
+          user_id: string;
+          feature: string;
+          cost_units: number;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};
