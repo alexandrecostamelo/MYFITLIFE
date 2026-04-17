@@ -1,10 +1,4 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   public: {
@@ -27,8 +21,9 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
-        Insert: Partial<Database['public']['Tables']['profiles']['Row']> & { id: string };
-        Update: Partial<Database['public']['Tables']['profiles']['Row']>;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
       };
       user_profiles: {
         Row: {
@@ -62,8 +57,130 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
-        Insert: Partial<Database['public']['Tables']['user_profiles']['Row']> & { user_id: string };
-        Update: Partial<Database['public']['Tables']['user_profiles']['Row']>;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      foods: {
+        Row: {
+          id: string;
+          source: string | null;
+          name: string;
+          name_normalized: string | null;
+          brand: string | null;
+          category: string | null;
+          calories_kcal: number;
+          protein_g: number;
+          carbs_g: number;
+          fats_g: number;
+          fiber_g: number | null;
+          sodium_mg: number | null;
+          serving_size_g: number | null;
+          serving_description: string | null;
+          verified: boolean;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      meal_logs: {
+        Row: {
+          id: string;
+          user_id: string;
+          food_id: string | null;
+          logged_at: string;
+          meal_type: string;
+          amount_g: number;
+          calories_kcal: number;
+          protein_g: number;
+          carbs_g: number;
+          fats_g: number;
+          input_method: string;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      exercises: {
+        Row: {
+          id: string;
+          slug: string;
+          name_pt: string;
+          name_en: string | null;
+          description: string | null;
+          instructions: string[] | null;
+          common_mistakes: string[] | null;
+          breathing_notes: string | null;
+          category: string;
+          primary_muscles: string[];
+          secondary_muscles: string[] | null;
+          equipment: string[];
+          difficulty: number;
+          verified: boolean;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      workout_logs: {
+        Row: {
+          id: string;
+          user_id: string;
+          started_at: string;
+          finished_at: string | null;
+          duration_sec: number | null;
+          perceived_effort: number | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      set_logs: {
+        Row: {
+          id: string;
+          workout_log_id: string;
+          exercise_id: string;
+          set_number: number;
+          reps: number | null;
+          weight_kg: number | null;
+          rir: number | null;
+          duration_sec: number | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      coach_conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      coach_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          role: string;
+          content: string;
+          model: string | null;
+          tokens_used: number | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
       };
     };
     Views: {};

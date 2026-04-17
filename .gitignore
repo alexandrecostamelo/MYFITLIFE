@@ -18,3 +18,4 @@ android/app/build
 android/build
 .claude/
 package-lock.json
+apps/web/tsconfig.tsbuildinfo
