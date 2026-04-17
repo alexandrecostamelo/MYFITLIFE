@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2 } from 'lucide-react';
+import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download } from 'lucide-react';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -79,6 +79,26 @@ export default function ProfilePage() {
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </Link>
+        <button
+          onClick={async () => {
+            const res = await fetch('/api/account/export');
+            if (!res.ok) return;
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `myfitlife-export-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="flex w-full items-center justify-between p-4 text-left hover:bg-slate-50"
+        >
+          <div className="flex items-center gap-3">
+            <Download className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Exportar meus dados (LGPD)</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
         <Link href="/termos" className="flex items-center justify-between p-4 hover:bg-slate-50">
           <div className="flex items-center gap-3">
             <FileText className="h-4 w-4 text-muted-foreground" />

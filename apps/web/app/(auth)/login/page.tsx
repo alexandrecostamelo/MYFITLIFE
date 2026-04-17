@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false);
 
   async function handleLogin() {
     setLoading(true);
@@ -124,7 +125,22 @@ export default function LoginPage() {
               </Button>
             )}
             {mode === 'signup' && (
-              <Button onClick={handleSignup} disabled={disabled} className="w-full">
+              <label className="mb-3 flex items-start gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span className="text-muted-foreground">
+                  Li e concordo com os <Link href="/termos" className="text-primary underline">Termos</Link> e a{' '}
+                  <Link href="/privacidade" className="text-primary underline">Política de Privacidade</Link>.
+                  Autorizo o tratamento dos meus dados de saúde para cálculo de metas e uso no aplicativo (LGPD art. 11, I).
+                </span>
+              </label>
+            )}
+            {mode === 'signup' && (
+              <Button onClick={handleSignup} disabled={disabled || !agreed} className="w-full">
                 {loading ? 'Criando...' : 'Criar conta'}
               </Button>
             )}
