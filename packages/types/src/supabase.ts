@@ -182,6 +182,40 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      daily_plans: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan_date: string;
+          meals_suggestion: any;
+          water_goal_ml: number | null;
+          habits: any;
+          ai_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      morning_checkins: {
+        Row: {
+          id: string;
+          user_id: string;
+          checkin_date: string;
+          sleep_quality: number | null;
+          sleep_hours: number | null;
+          energy_level: number | null;
+          mood: number | null;
+          stress_level: number | null;
+          sore_muscles: string[] | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};

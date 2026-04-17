@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./prompts/onboarding": "./src/prompts/onboarding.ts",
-    "./prompts/coach": "./src/prompts/coach.ts"
+    "./prompts/coach": "./src/prompts/coach.ts",
+    "./prompts/autopilot": "./src/prompts/autopilot.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
