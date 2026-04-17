@@ -1,0 +1,19 @@
+{
+  "name": "@myfitlife/db",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "seed:foods": "tsx seed/foods.ts",
+    "seed:exercises": "tsx seed/exercises.ts",
+    "seed:all": "pnpm seed:foods && pnpm seed:exercises"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.7.4"
+  }
+}
