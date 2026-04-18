@@ -241,6 +241,25 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      equipment_recognitions: {
+        Row: {
+          id: string;
+          user_id: string;
+          photo_path: string | null;
+          detected_name: string;
+          detected_name_en: string | null;
+          category: string | null;
+          primary_muscles: string[] | null;
+          confidence: 'high' | 'medium' | 'low' | null;
+          suggested_exercises: any;
+          user_confirmed: boolean;
+          added_to_workout_id: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};

@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Play, Plus, Check, Loader2, Search } from 'lucide-react';
+import { Play, Plus, Check, Loader2, Search, Camera } from 'lucide-react';
 
 type Exercise = {
   id: string;
@@ -18,6 +20,8 @@ type Exercise = {
 type SetRow = { set_number: number; reps: string; weight_kg: string; rir: string };
 
 export default function WorkoutPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [workoutId, setWorkoutId] = useState<string | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [query, setQuery] = useState('');
@@ -25,6 +29,28 @@ export default function WorkoutPage() {
   const [sets, setSets] = useState<SetRow[]>([{ set_number: 1, reps: '', weight_kg: '', rir: '' }]);
   const [history, setHistory] = useState<{ id: string; started_at: string; duration_sec: number | null }[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const addExerciseId = searchParams.get('add_exercise');
+    if (addExerciseId && workoutId) {
+      const pending = sessionStorage.getItem('pending_exercise');
+      if (pending) {
+        try {
+          const ex = JSON.parse(pending);
+          setSelectedExercise({
+            id: ex.id,
+            name_pt: ex.name_pt,
+            category: '',
+            primary_muscles: ex.primary_muscles || [],
+            equipment: [],
+            difficulty: 0,
+          });
+          sessionStorage.removeItem('pending_exercise');
+          router.replace('/app/workout');
+        } catch { /* ignore */ }
+      }
+    }
+  }, [searchParams, workoutId, router]);
 
   async function searchExercises(q: string) {
     setQuery(q);
@@ -142,6 +168,17 @@ export default function WorkoutPage() {
 
             {!selectedExercise ? (
               <>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="mb-3 w-full"
+                >
+                  <Link href={`/app/workout/equipment?workout_id=${workoutId}`}>
+                    <Camera className="mr-2 h-4 w-4" />
+                    Identificar aparelho por foto
+                  </Link>
+                </Button>
+
                 <div className="relative mb-2">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
