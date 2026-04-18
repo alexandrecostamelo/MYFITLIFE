@@ -69,10 +69,10 @@ export default function AppHome() {
             <Link href="/app/explore"><span className="text-lg">📍</span><span className="text-xs">Explorar</span></Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
-            <Link href="/app/friends"><span className="text-lg">👥</span><span className="text-xs">Amigos</span></Link>
+            <Link href="/app/professionals"><span className="text-lg">👨‍⚕️</span><span className="text-xs">Profissionais</span></Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
-            <Link href="/app/leaderboard"><span className="text-lg">🏆</span><span className="text-xs">Ranking</span></Link>
+            <Link href="/app/friends"><span className="text-lg">👥</span><span className="text-xs">Amigos</span></Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
             <Link href="/app/challenges"><span className="text-lg">🎯</span><span className="text-xs">Desafios</span></Link>

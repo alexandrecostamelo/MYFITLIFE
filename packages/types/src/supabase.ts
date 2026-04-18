@@ -504,6 +504,63 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      professionals: {
+        Row: {
+          id: string;
+          user_id: string;
+          profession: 'nutritionist' | 'personal_trainer' | 'physiotherapist';
+          council_type: 'CRN' | 'CREF' | 'CREFITO';
+          council_number: string;
+          council_state: string;
+          full_name: string;
+          bio: string | null;
+          avatar_url: string | null;
+          specialties: string[];
+          formations: string[];
+          city: string | null;
+          state: string | null;
+          modalities: string[];
+          price_consultation: number | null;
+          price_monthly: number | null;
+          whatsapp: string | null;
+          email: string | null;
+          instagram: string | null;
+          website: string | null;
+          verified: boolean;
+          active: boolean;
+          rating_avg: number | null;
+          rating_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      professional_reviews: {
+        Row: {
+          id: string;
+          professional_id: string;
+          user_id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      professional_favorites: {
+        Row: {
+          id: string;
+          user_id: string;
+          professional_id: string;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       gym_claims: {
         Row: {
           id: string;

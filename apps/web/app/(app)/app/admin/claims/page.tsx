@@ -50,6 +50,17 @@ export default function AdminClaimsPage() {
         <h1 className="text-2xl font-bold">Solicitações de propriedade</h1>
       </header>
 
+      <Card className="mb-4 p-2">
+        <div className="grid grid-cols-2 gap-1">
+          <Button asChild variant="default" size="sm">
+            <Link href="/app/admin/claims">Claims</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/app/admin/professionals">Profissionais</Link>
+          </Button>
+        </div>
+      </Card>
+
       {claims.length === 0 ? (
         <Card className="p-6 text-center text-sm text-muted-foreground">
           Nenhuma solicitação encontrada. Você pode não ter permissão de administrador.
