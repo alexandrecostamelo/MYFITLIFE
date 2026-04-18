@@ -504,6 +504,22 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      gym_claims: {
+        Row: {
+          id: string;
+          gym_place_id: string;
+          user_id: string;
+          status: 'pending' | 'approved' | 'rejected';
+          message: string | null;
+          admin_notes: string | null;
+          created_at: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};

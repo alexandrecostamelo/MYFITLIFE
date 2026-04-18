@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell, Trophy } from 'lucide-react';
+import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell, Trophy, Building2 } from 'lucide-react';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -127,6 +127,24 @@ export default function ProfilePage() {
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </Link>
+        {profile?.role === 'gym_admin' || profile?.role === 'platform_admin' ? (
+          <Link href="/app/gym-admin" className="flex items-center justify-between p-4 hover:bg-slate-50">
+            <div className="flex items-center gap-3">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">Painel da academia</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+        ) : null}
+        {profile?.role === 'platform_admin' ? (
+          <Link href="/app/admin/claims" className="flex items-center justify-between p-4 hover:bg-slate-50">
+            <div className="flex items-center gap-3">
+              <Building2 className="h-4 w-4 text-amber-500" />
+              <span className="text-sm text-amber-700">Gerenciar solicitações</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+        ) : null}
         <Link href="/app/profile/delete" className="flex items-center justify-between p-4 hover:bg-slate-50">
           <div className="flex items-center gap-3">
             <Trash2 className="h-4 w-4 text-destructive" />

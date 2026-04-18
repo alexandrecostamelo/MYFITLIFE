@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GymMap } from '@/components/gym-map';
-import { ArrowLeft, MapPin, Phone, Globe, Instagram, Star, Users, Loader2, LogIn, LogOut, Heart } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Globe, Instagram, Star, Users, Loader2, LogIn, LogOut, Heart, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function GymPlaceDetailPage() {
   const params = useParams();
@@ -213,6 +213,29 @@ export default function GymPlaceDetailPage() {
           {data.my_review ? 'Atualizar avaliação' : 'Enviar avaliação'}
         </Button>
       </Card>
+
+      {gym.claimed_by ? (
+        <Card className="mb-4 p-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <span className="text-sm font-medium text-green-700">Academia verificada</span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">Esta academia tem um responsável cadastrado na plataforma.</p>
+        </Card>
+      ) : (
+        <Card className="mb-4 border-amber-200 bg-amber-50 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <span className="text-sm font-medium text-amber-700">Sem responsável</span>
+            </div>
+            <Button asChild size="sm" variant="outline" className="border-amber-400 text-amber-700 hover:bg-amber-100">
+              <Link href={`/app/explore/${id}/claim`}>Reivindicar</Link>
+            </Button>
+          </div>
+          <p className="mt-1 text-xs text-amber-600">Você é o dono desta academia? Reivindique e acesse o painel B2B.</p>
+        </Card>
+      )}
 
       {data.recent_reviews?.length > 0 && (
         <Card className="p-4">
