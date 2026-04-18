@@ -381,6 +381,69 @@ export type Database = {
         Row: { id: string; user_id: string; quest_date: string; title: string; description: string; xp_reward: number; target_type: string; target_value: number; progress: number; completed: boolean; completed_at: string | null; created_at: string };
         Insert: Record<string, unknown>; Update: Record<string, unknown>; Relationships: [];
       };
+      friendships: {
+        Row: {
+          id: string;
+          requester_id: string;
+          addressee_id: string;
+          status: 'pending' | 'accepted' | 'blocked' | 'declined';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      challenges: {
+        Row: {
+          id: string;
+          creator_id: string;
+          title: string;
+          description: string | null;
+          metric: string;
+          target_value: number;
+          start_date: string;
+          end_date: string;
+          status: 'active' | 'completed' | 'cancelled';
+          is_public: boolean;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      challenge_participants: {
+        Row: {
+          id: string;
+          challenge_id: string;
+          user_id: string;
+          joined_at: string;
+          current_progress: number;
+          completed_at: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      weekly_reports: {
+        Row: {
+          id: string;
+          user_id: string;
+          week_start: string;
+          week_end: string;
+          workouts_count: number;
+          meals_count: number;
+          checkins_count: number;
+          xp_earned: number;
+          weight_change_kg: number | null;
+          highlight: string | null;
+          summary: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};

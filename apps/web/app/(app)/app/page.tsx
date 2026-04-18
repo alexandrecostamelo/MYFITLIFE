@@ -63,6 +63,31 @@ export default function AppHome() {
 
       <StatsWidget />
 
+      <Card className="mb-4 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
+            <Link href="/app/friends"><span className="text-lg">👥</span><span className="text-xs">Amigos</span></Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
+            <Link href="/app/leaderboard"><span className="text-lg">🏆</span><span className="text-xs">Ranking</span></Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
+            <Link href="/app/challenges"><span className="text-lg">🎯</span><span className="text-xs">Desafios</span></Link>
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="mb-4 p-3">
+        <div className="grid grid-cols-2 gap-2">
+          <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
+            <Link href="/app/reports/weekly"><span className="text-lg">📅</span><span className="text-xs">Sua semana</span></Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
+            <Link href="/app/reports/wrapped"><span className="text-lg">✨</span><span className="text-xs">Wrapped</span></Link>
+          </Button>
+        </div>
+      </Card>
+
       {!checkin && <div className="mb-4"><MorningCheckin onDone={loadAll} /></div>}
 
       <Card className="mb-4 p-4">
