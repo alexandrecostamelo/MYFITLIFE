@@ -444,6 +444,66 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      gym_places: {
+        Row: {
+          id: string;
+          name: string;
+          address: string | null;
+          city: string | null;
+          state: string | null;
+          country: string | null;
+          latitude: number;
+          longitude: number;
+          phone: string | null;
+          website: string | null;
+          instagram: string | null;
+          google_place_id: string | null;
+          contributed_by: string | null;
+          verified: boolean;
+          claimed_by: string | null;
+          amenities: string[] | null;
+          operating_hours: any;
+          photos_paths: string[] | null;
+          rating_avg: number | null;
+          rating_count: number;
+          checkins_total: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      gym_reviews: {
+        Row: {
+          id: string;
+          gym_place_id: string;
+          user_id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      gym_checkins: {
+        Row: {
+          id: string;
+          user_id: string;
+          gym_place_id: string | null;
+          user_gym_id: string | null;
+          workout_log_id: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          checked_in_at: string;
+          left_at: string | null;
+          duration_sec: number | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};
