@@ -5,7 +5,8 @@
   "scripts": {
     "seed:foods": "tsx seed/foods.ts",
     "seed:exercises": "tsx seed/exercises.ts",
-    "seed:all": "pnpm seed:foods && pnpm seed:exercises"
+    "seed:trails": "tsx seed/trails.ts",
+    "seed:all": "pnpm seed:foods && pnpm seed:exercises && pnpm seed:trails"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

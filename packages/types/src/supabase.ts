@@ -311,6 +311,56 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      progress_photos: {
+        Row: {
+          id: string;
+          user_id: string;
+          photo_path: string;
+          pose: 'front' | 'back' | 'side_left' | 'side_right';
+          weight_kg: number | null;
+          body_fat_percent: number | null;
+          notes: string | null;
+          taken_at: string;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      trails: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          subtitle: string | null;
+          description: string;
+          duration_days: number;
+          level: 'beginner' | 'intermediate' | 'advanced';
+          goal: string;
+          cover_emoji: string | null;
+          is_premium: boolean;
+          days_config: any;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      user_trails: {
+        Row: {
+          id: string;
+          user_id: string;
+          trail_id: string;
+          started_at: string;
+          completed_at: string | null;
+          current_day: number;
+          days_completed: number[] | null;
+          abandoned: boolean;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};

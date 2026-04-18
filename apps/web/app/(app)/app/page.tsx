@@ -107,6 +107,23 @@ export default function AppHome() {
         </div>
       </Card>
 
+      <Card className="mb-4 p-4">
+        <div className="grid grid-cols-2 gap-2">
+          <Button asChild variant="outline" className="h-auto flex-col gap-1 py-3">
+            <Link href="/app/trails">
+              <span className="text-lg">🎯</span>
+              <span className="text-xs">Trilhas</span>
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="h-auto flex-col gap-1 py-3">
+            <Link href="/app/progress">
+              <span className="text-lg">📸</span>
+              <span className="text-xs">Fotos de progresso</span>
+            </Link>
+          </Button>
+        </div>
+      </Card>
+
       {plan && (
         <>
           {plan.ai_notes && (
