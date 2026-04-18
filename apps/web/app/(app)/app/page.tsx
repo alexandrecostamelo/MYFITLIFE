@@ -95,6 +95,18 @@ export default function AppHome() {
         </div>
       </Card>
 
+      <Card className="mb-4 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-medium">Análise muscular</h2>
+            <p className="text-xs text-muted-foreground">Heatmap de músculos trabalhados</p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/insights/muscles">Ver</Link>
+          </Button>
+        </div>
+      </Card>
+
       {plan && (
         <>
           {plan.ai_notes && (

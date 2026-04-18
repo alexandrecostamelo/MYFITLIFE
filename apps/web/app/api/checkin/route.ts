@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
+const sorenessSchema = z.object({
+  region: z.string(),
+  intensity: z.number().int().min(1).max(5),
+});
+
 const bodySchema = z.object({
   sleep_quality: z.number().int().min(1).max(10).optional(),
   sleep_hours: z.number().min(0).max(24).optional(),
@@ -9,6 +14,7 @@ const bodySchema = z.object({
   mood: z.number().int().min(1).max(10).optional(),
   stress_level: z.number().int().min(1).max(10).optional(),
   sore_muscles: z.array(z.string()).optional(),
+  soreness_details: z.array(sorenessSchema).optional(),
   notes: z.string().optional(),
 });
 

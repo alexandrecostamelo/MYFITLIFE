@@ -34,7 +34,7 @@ export async function POST() {
 
   const { data: checkin } = await supabase
     .from('morning_checkins')
-    .select('sleep_quality, energy_level, sore_muscles')
+    .select('sleep_quality, energy_level, sore_muscles, soreness_details')
     .eq('user_id', user.id)
     .eq('checkin_date', today)
     .maybeSingle();
@@ -77,7 +77,12 @@ export async function POST() {
     daysPerWeek: 5,
     minutesPerSession: up.available_minutes_per_day ?? 60,
     weekdayName,
-    lastCheckin: checkin || undefined,
+    lastCheckin: checkin ? {
+      sleep_quality: checkin.sleep_quality,
+      energy_level: checkin.energy_level,
+      sore_muscles: checkin.sore_muscles,
+      soreness_details: checkin.soreness_details as any,
+    } : undefined,
     activeGym,
   });
 

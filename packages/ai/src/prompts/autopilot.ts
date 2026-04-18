@@ -56,6 +56,7 @@ export function buildAutopilotContext(params: {
     sleep_quality?: number;
     energy_level?: number;
     sore_muscles?: string[];
+    soreness_details?: Array<{ region: string; intensity: number }>;
   };
   activeGym?: {
     name: string;
@@ -96,7 +97,14 @@ ${gymSection}
 ${params.lastCheckin ? `CHECK-IN DE HOJE:
 Sono: ${params.lastCheckin.sleep_quality ?? 'sem registro'}/10
 Energia: ${params.lastCheckin.energy_level ?? 'sem registro'}/10
-Músculos doloridos: ${params.lastCheckin.sore_muscles?.join(', ') || 'nenhum'}` : ''}
+Dores musculares: ${
+  params.lastCheckin.soreness_details && params.lastCheckin.soreness_details.length > 0
+    ? params.lastCheckin.soreness_details.map((s) => `${s.region} (intensidade ${s.intensity}/5)`).join(', ')
+    : params.lastCheckin.sore_muscles?.join(', ') || 'nenhuma'
+}
+
+IMPORTANTE: Se houver dor muscular intensidade 3+, evite treinar essa região hoje.
+Se houver dor 4-5 em grupos grandes, prefira mobilidade ou descanso ativo.` : ''}
 
 Gere o plano do dia em JSON seguindo a regra do system.
 `.trim();
