@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Play, Plus, Check, Loader2, Search, Camera } from 'lucide-react';
+import { Play, Plus, Check, Loader2, Search, Camera, Dumbbell } from 'lucide-react';
 
 type Exercise = {
   id: string;
@@ -135,6 +135,19 @@ export default function WorkoutPage() {
 
       {!workoutId ? (
         <>
+          <Card className="mb-4 p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <Dumbbell className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-medium">Treino adaptativo</h2>
+            </div>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Monte um treino usando apenas os aparelhos da academia que você está.
+            </p>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/app/gyms">Minhas academias</Link>
+            </Button>
+          </Card>
+
           <Card className="mb-4 p-4">
             <Button onClick={startWorkout} disabled={loading} className="w-full">
               <Play className="mr-2 h-4 w-4" /> Iniciar treino

@@ -260,6 +260,40 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      user_gyms: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          city: string | null;
+          state: string | null;
+          notes: string | null;
+          is_primary: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      gym_equipment: {
+        Row: {
+          id: string;
+          gym_id: string;
+          user_id: string;
+          name: string;
+          name_normalized: string;
+          category: string | null;
+          primary_muscles: string[] | null;
+          confidence: 'high' | 'medium' | 'low' | null;
+          recognition_id: string | null;
+          added_manually: boolean;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};
