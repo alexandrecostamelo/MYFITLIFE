@@ -6,7 +6,8 @@
     "seed:foods": "tsx seed/foods.ts",
     "seed:exercises": "tsx seed/exercises.ts",
     "seed:trails": "tsx seed/trails.ts",
-    "seed:all": "pnpm seed:foods && pnpm seed:exercises && pnpm seed:trails"
+    "seed:achievements": "tsx seed/achievements.ts",
+    "seed:all": "pnpm seed:foods && pnpm seed:exercises && pnpm seed:trails && pnpm seed:achievements"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

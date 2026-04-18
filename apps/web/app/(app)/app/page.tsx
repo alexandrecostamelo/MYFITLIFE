@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MorningCheckin } from '@/components/morning-checkin';
 import Link from 'next/link';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Flame, Trophy } from 'lucide-react';
 
 export default function AppHome() {
   const [profile, setProfile] = useState<any>(null);
@@ -60,6 +60,8 @@ export default function AppHome() {
         <h1 className="text-2xl font-bold">Oi, {firstName}!</h1>
         <p className="text-muted-foreground">Seu plano do dia</p>
       </header>
+
+      <StatsWidget />
 
       {!checkin && <div className="mb-4"><MorningCheckin onDone={loadAll} /></div>}
 
@@ -177,6 +179,26 @@ export default function AppHome() {
         </>
       )}
     </main>
+  );
+}
+
+function StatsWidget() {
+  const [stats, setStats] = useState<any>(null);
+  useEffect(() => { fetch('/api/me/stats').then((r) => r.json()).then((d) => setStats(d.stats)); }, []);
+  if (!stats) return null;
+  return (
+    <Card className="mb-4 p-3">
+      <Link href="/app/stats" className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">{stats.level}</div>
+          <div><div className="text-sm font-medium">Nível {stats.level}</div><div className="text-xs text-muted-foreground">{stats.xp_to_next} XP pro próximo</div></div>
+        </div>
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-1"><Flame className="h-4 w-4 text-orange-500" /><span>{stats.streak.current}</span></div>
+          <Trophy className="h-4 w-4 text-amber-500" />
+        </div>
+      </Link>
+    </Card>
   );
 }
 

@@ -61,5 +61,8 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { awardXp, checkAchievements } = await import('@/lib/gamification');
+  await awardXp(supabase, user.id, 'GYM_CREATED');
+  await checkAchievements(supabase, user.id);
   return NextResponse.json({ id: data.id });
 }

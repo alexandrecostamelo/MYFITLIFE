@@ -33,6 +33,10 @@ export async function POST(req: NextRequest) {
     .upsert({ user_id: user.id, checkin_date: today, ...parsed.data }, { onConflict: 'user_id,checkin_date' });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { awardXp, touchActivity, checkAchievements } = await import('@/lib/gamification');
+  await awardXp(supabase, user.id, 'CHECKIN_DAILY');
+  await touchActivity(supabase, user.id);
+  await checkAchievements(supabase, user.id);
   return NextResponse.json({ ok: true });
 }
 

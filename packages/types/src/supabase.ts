@@ -361,6 +361,26 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      user_stats: {
+        Row: { user_id: string; total_xp: number; level: number; xp_strength: number; xp_endurance: number; xp_flexibility: number; xp_consistency: number; xp_nutrition: number; current_streak: number; longest_streak: number; last_active_date: string | null; freezes_used_this_month: number; freezes_reset_month: string | null; updated_at: string };
+        Insert: Record<string, unknown>; Update: Record<string, unknown>; Relationships: [];
+      };
+      xp_events: {
+        Row: { id: string; user_id: string; event_type: string; xp_awarded: number; dimension: string | null; ref_table: string | null; ref_id: string | null; description: string | null; created_at: string };
+        Insert: Record<string, unknown>; Update: Record<string, unknown>; Relationships: [];
+      };
+      achievements: {
+        Row: { id: string; slug: string; title: string; description: string; icon: string; category: string; rarity: 'common' | 'rare' | 'epic' | 'legendary'; xp_reward: number; criteria: any };
+        Insert: Record<string, unknown>; Update: Record<string, unknown>; Relationships: [];
+      };
+      user_achievements: {
+        Row: { id: string; user_id: string; achievement_id: string; unlocked_at: string };
+        Insert: Record<string, unknown>; Update: Record<string, unknown>; Relationships: [];
+      };
+      daily_quests: {
+        Row: { id: string; user_id: string; quest_date: string; title: string; description: string; xp_reward: number; target_type: string; target_value: number; progress: number; completed: boolean; completed_at: string | null; created_at: string };
+        Insert: Record<string, unknown>; Update: Record<string, unknown>; Relationships: [];
+      };
     };
     Views: {};
     Functions: {};

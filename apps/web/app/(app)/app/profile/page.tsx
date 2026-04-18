@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell } from 'lucide-react';
+import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell, Trophy } from 'lucide-react';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -65,6 +65,13 @@ export default function ProfilePage() {
       )}
 
       <Card className="mb-4 divide-y">
+        <Link href="/app/stats" className="flex items-center justify-between p-4 hover:bg-slate-50">
+          <div className="flex items-center gap-3">
+            <Trophy className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Sua evolução</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
         <Link href="/app/profile/edit" className="flex items-center justify-between p-4 hover:bg-slate-50">
           <div className="flex items-center gap-3">
             <Pencil className="h-4 w-4 text-muted-foreground" />

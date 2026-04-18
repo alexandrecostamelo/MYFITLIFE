@@ -44,6 +44,10 @@ export async function POST(req: NextRequest, context: { params: Promise<{ slug: 
       .eq('id', ut.id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const { awardXp: axp, checkAchievements: cka } = await import('@/lib/gamification');
+    await axp(supabase, user.id, 'TRAIL_DAY', { refTable: 'user_trails', refId: ut.id });
+    if (completed) await axp(supabase, user.id, 'TRAIL_COMPLETED', { refTable: 'user_trails', refId: ut.id });
+    await cka(supabase, user.id);
     return NextResponse.json({ ok: true, completed });
   }
 

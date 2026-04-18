@@ -29,6 +29,11 @@ export async function POST(req: NextRequest) {
 
   await supabase.from('user_profiles').update({ current_weight_kg: parsed.data.weight_kg }).eq('user_id', user.id);
 
+  const { awardXp, touchActivity, checkAchievements } = await import('@/lib/gamification');
+  await awardXp(supabase, user.id, 'WEIGHT_LOGGED');
+  await touchActivity(supabase, user.id);
+  await checkAchievements(supabase, user.id);
+
   return NextResponse.json({ ok: true });
 }
 

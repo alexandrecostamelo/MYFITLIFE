@@ -7,3 +7,4 @@ export * from './prompts/equipment-vision';
 export * from './prompts/adaptive-workout';
 export * from './prompts/shopping-list';
 export * from './prompts/food-substitution';
+export * from './prompts/quests';

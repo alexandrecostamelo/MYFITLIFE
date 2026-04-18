@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
       duration_sec: parsed.data.duration_sec,
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const { awardXp: ax } = await import('@/lib/gamification');
+    await ax(supabase, user.id, 'SET_LOGGED');
     return NextResponse.json({ ok: true });
   }
 
@@ -78,6 +80,10 @@ export async function POST(req: NextRequest) {
       .eq('id', parsed.data.workout_log_id)
       .eq('user_id', user.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const { awardXp: awx, touchActivity: ta, checkAchievements: ca } = await import('@/lib/gamification');
+    await awx(supabase, user.id, 'WORKOUT_COMPLETED', { refTable: 'workout_logs', refId: parsed.data.workout_log_id });
+    await ta(supabase, user.id);
+    await ca(supabase, user.id);
     return NextResponse.json({ ok: true });
   }
 

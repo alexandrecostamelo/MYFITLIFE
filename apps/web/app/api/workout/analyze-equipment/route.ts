@@ -158,6 +158,10 @@ export async function POST(req: NextRequest) {
 
     await logUsage(user.id, 'equipment_vision', 1);
 
+    const { awardXp: axp, checkAchievements: cka } = await import('@/lib/gamification');
+    await axp(supabase, user.id, 'EQUIPMENT_SCAN');
+    await cka(supabase, user.id);
+
     return NextResponse.json({
       recognition_id: recognition?.id,
       equipment: {

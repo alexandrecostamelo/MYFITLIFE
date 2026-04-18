@@ -41,6 +41,10 @@ export async function POST(req: NextRequest) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { awardXp, touchActivity, checkAchievements } = await import('@/lib/gamification');
+  await awardXp(supabase, user.id, 'MEAL_LOGGED');
+  await touchActivity(supabase, user.id);
+  await checkAchievements(supabase, user.id);
   return NextResponse.json({ ok: true });
 }
 
