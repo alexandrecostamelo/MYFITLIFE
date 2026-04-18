@@ -12,7 +12,9 @@
     "./prompts/autopilot": "./src/prompts/autopilot.ts",
     "./prompts/food-vision": "./src/prompts/food-vision.ts",
     "./prompts/equipment-vision": "./src/prompts/equipment-vision.ts",
-    "./prompts/adaptive-workout": "./src/prompts/adaptive-workout.ts"
+    "./prompts/adaptive-workout": "./src/prompts/adaptive-workout.ts",
+    "./prompts/shopping-list": "./src/prompts/shopping-list.ts",
+    "./prompts/food-substitution": "./src/prompts/food-substitution.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",

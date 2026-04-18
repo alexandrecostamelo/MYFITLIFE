@@ -294,6 +294,23 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      shopping_lists: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          source: string | null;
+          plan_date_from: string | null;
+          plan_date_to: string | null;
+          items: any;
+          completed: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};

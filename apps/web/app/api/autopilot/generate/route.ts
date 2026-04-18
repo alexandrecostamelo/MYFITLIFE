@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { AUTOPILOT_DAILY_SYSTEM, buildAutopilotContext } from '@myfitlife/ai/prompts/autopilot';
 
+export const maxDuration = 60;
+
 export async function POST() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -37,6 +39,25 @@ export async function POST() {
     .eq('checkin_date', today)
     .maybeSingle();
 
+  const { data: primaryGym } = await supabase
+    .from('user_gyms')
+    .select('id, name')
+    .eq('user_id', user.id)
+    .eq('is_primary', true)
+    .maybeSingle();
+
+  let activeGym: { name: string; equipment: string[] } | null = null;
+  if (primaryGym) {
+    const { data: gymEq } = await supabase
+      .from('gym_equipment')
+      .select('name')
+      .eq('gym_id', primaryGym.id);
+    activeGym = {
+      name: primaryGym.name,
+      equipment: (gymEq || []).map((e: any) => e.name),
+    };
+  }
+
   const weekdayNames = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
   const weekdayName = weekdayNames[new Date().getDay()];
 
@@ -57,6 +78,7 @@ export async function POST() {
     minutesPerSession: up.available_minutes_per_day ?? 60,
     weekdayName,
     lastCheckin: checkin || undefined,
+    activeGym,
   });
 
   const anthropic = getAnthropicClient();
@@ -86,7 +108,7 @@ export async function POST() {
         plan_date: today,
         meals_suggestion: plan.meals,
         water_goal_ml: plan.water_goal_ml,
-        habits: { workout: plan.workout },
+        habits: { workout: plan.workout, active_gym: activeGym?.name || null },
         ai_notes: plan.coach_message,
       })
       .select()

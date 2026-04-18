@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MorningCheckin } from '@/components/morning-checkin';
+import Link from 'next/link';
 import { Loader2, Sparkles } from 'lucide-react';
 
 export default function AppHome() {
@@ -81,6 +82,18 @@ export default function AppHome() {
           </Button>
         </Card>
       )}
+
+      <Card className="mb-4 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-medium">Lista de compras</h2>
+            <p className="text-xs text-muted-foreground">Gerada a partir dos seus planos</p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/shopping-list">Abrir</Link>
+          </Button>
+        </div>
+      </Card>
 
       {plan && (
         <>
