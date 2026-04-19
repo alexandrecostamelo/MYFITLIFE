@@ -825,8 +825,27 @@ export type Database = {
           cancelled_by: string | null;
           cancelled_at: string | null;
           cancel_reason: string | null;
+          video_room_name: string | null;
+          video_room_url: string | null;
+          video_room_expires_at: string | null;
+          recording_enabled: boolean;
+          client_recording_consent: boolean | null;
+          recording_url: string | null;
           created_at: string;
           updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      video_session_events: {
+        Row: {
+          id: string;
+          appointment_id: string;
+          user_id: string | null;
+          event_type: 'joined' | 'left' | 'recording_started' | 'recording_stopped';
+          metadata: Record<string, unknown>;
+          created_at: string;
         };
         Insert: Record<string, unknown>;
         Update: Record<string, unknown>;

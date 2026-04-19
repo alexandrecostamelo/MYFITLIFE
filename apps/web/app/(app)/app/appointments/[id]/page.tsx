@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
-import { ArrowLeft, Calendar, Clock, Loader2, MessageCircle, Video, X, Check, ExternalLink, Shield } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Loader2, MessageCircle, Video, X, Check, ExternalLink, Shield, Circle } from 'lucide-react';
 
 const STATUS_LABELS: Record<string, string> = {
   requested: 'Aguardando confirmação',
@@ -123,7 +123,7 @@ export default function AppointmentDetailPage() {
         </Card>
       )}
 
-      {appt.meeting_url && appt.status === 'confirmed' && (
+      {appt.meeting_url && appt.status === 'confirmed' && !appt.video_room_url && (
         <Card className="mb-4 p-4">
           <h3 className="mb-2 text-sm font-medium">Link da sessão</h3>
           <a href={appt.meeting_url} target="_blank" rel="noopener" className="flex items-center gap-2 text-sm text-primary hover:underline">
@@ -131,6 +131,15 @@ export default function AppointmentDetailPage() {
             <ExternalLink className="h-3 w-3" />
           </a>
         </Card>
+      )}
+
+      {appt.status === 'confirmed' && (
+        <VideoBlock
+          appointment={appt}
+          isProfessional={isProfessional}
+          isClient={isClient}
+          onUpdate={load}
+        />
       )}
 
       {isProfessional && appt.status === 'confirmed' && appt.share_history && (
@@ -197,5 +206,114 @@ export default function AppointmentDetailPage() {
         </Button>
       )}
     </main>
+  );
+}
+
+function VideoBlock({
+  appointment,
+  isProfessional,
+  isClient,
+  onUpdate,
+}: {
+  appointment: any;
+  isProfessional: boolean;
+  isClient: boolean;
+  onUpdate: () => void;
+}) {
+  const [recordingEnabled, setRecordingEnabled] = useState<boolean>(appointment.recording_enabled ?? false);
+  const [clientConsent, setClientConsent] = useState<boolean | null>(appointment.client_recording_consent ?? null);
+  const [saving, setSaving] = useState(false);
+
+  const now = new Date();
+  const scheduled = new Date(appointment.scheduled_at);
+  const diffMin = (scheduled.getTime() - now.getTime()) / 60000;
+  const canJoin = diffMin <= 15 && diffMin >= -60;
+  const tooEarly = diffMin > 15;
+
+  async function updateRecording(body: object) {
+    setSaving(true);
+    await fetch(`/api/appointments/${appointment.id}/recording-consent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    setSaving(false);
+    onUpdate();
+  }
+
+  return (
+    <Card className="mb-4 space-y-3 p-4">
+      <div className="flex items-center gap-2">
+        <Video className="h-5 w-5 text-primary" />
+        <h3 className="font-medium">Videoconferência</h3>
+      </div>
+
+      {canJoin ? (
+        <Button asChild size="lg" className="w-full">
+          <Link href={`/app/appointments/${appointment.id}/video`}>
+            <Video className="mr-2 h-4 w-4" /> Entrar na sala
+          </Link>
+        </Button>
+      ) : tooEarly ? (
+        <div className="flex items-center gap-2 rounded-md bg-muted p-3 text-sm">
+          <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span>
+            Sala abre 15 min antes —{' '}
+            {scheduled.toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 rounded-md bg-muted p-3 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4 shrink-0" />
+          <span>Consulta encerrada</span>
+        </div>
+      )}
+
+      {isProfessional && (
+        <label className="flex cursor-pointer items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={recordingEnabled}
+            disabled={saving}
+            onChange={(e) => {
+              setRecordingEnabled(e.target.checked);
+              updateRecording({ recording_enabled: e.target.checked });
+            }}
+            className="h-4 w-4"
+          />
+          <span>
+            Gravar sessão{' '}
+            <span className="text-muted-foreground">(requer consentimento do cliente)</span>
+          </span>
+        </label>
+      )}
+
+      {isClient && recordingEnabled && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
+          <p className="mb-2 text-xs text-amber-900 dark:text-amber-200">
+            <Circle className="mr-1 inline h-2 w-2 fill-red-500 text-red-500" />
+            O profissional deseja gravar esta sessão.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={clientConsent === true ? 'default' : 'outline'}
+              disabled={saving}
+              onClick={() => { setClientConsent(true); updateRecording({ client_recording_consent: true }); }}
+            >
+              Permitir
+            </Button>
+            <Button
+              size="sm"
+              variant={clientConsent === false ? 'destructive' : 'outline'}
+              disabled={saving}
+              onClick={() => { setClientConsent(false); updateRecording({ client_recording_consent: false }); }}
+            >
+              Não permitir
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
