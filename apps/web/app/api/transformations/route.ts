@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { processTransformationImage } from '@/lib/transformation-image';
+import { processTransformationImage, type FaceCoord } from '@/lib/transformation-image';
 import { z } from 'zod';
 
 export const maxDuration = 60;
+
+const faceCoordSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+  confidence: z.number().optional(),
+});
 
 const schema = z.object({
   before_photo_id: z.string().uuid(),
@@ -14,6 +22,13 @@ const schema = z.object({
   anonymized: z.boolean().default(false),
   display_name_override: z.string().max(60).optional(),
   accept_terms: z.literal(true),
+  // Face detection results from client
+  faces_before: z.array(faceCoordSchema).optional(),
+  faces_after: z.array(faceCoordSchema).optional(),
+  img_width_before: z.number().optional(),
+  img_height_before: z.number().optional(),
+  img_width_after: z.number().optional(),
+  img_height_after: z.number().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -48,13 +63,25 @@ export async function POST(req: NextRequest) {
         supabase, 'progress-photos',
         (beforeRes.data as Record<string, unknown>).photo_path as string,
         user.id, 'before',
-        { anonymize: parsed.data.anonymized, watermarkText: 'myfitlife.app' }
+        {
+          anonymize: parsed.data.anonymized,
+          watermarkText: 'myfitlife.app',
+          faces: (parsed.data.faces_before || []) as FaceCoord[],
+          origWidth: parsed.data.img_width_before,
+          origHeight: parsed.data.img_height_before,
+        }
       ),
       processTransformationImage(
         supabase, 'progress-photos',
         (afterRes.data as Record<string, unknown>).photo_path as string,
         user.id, 'after',
-        { anonymize: parsed.data.anonymized, watermarkText: 'myfitlife.app' }
+        {
+          anonymize: parsed.data.anonymized,
+          watermarkText: 'myfitlife.app',
+          faces: (parsed.data.faces_after || []) as FaceCoord[],
+          origWidth: parsed.data.img_width_after,
+          origHeight: parsed.data.img_height_after,
+        }
       ),
     ]);
   } catch (e: unknown) {
@@ -75,6 +102,8 @@ export async function POST(req: NextRequest) {
     anonymized: parsed.data.anonymized,
     display_name_override: parsed.data.display_name_override,
     status: 'pending',
+    faces_detected_before: (parsed.data.faces_before || []).length,
+    faces_detected_after: (parsed.data.faces_after || []).length,
   }).select('id').single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

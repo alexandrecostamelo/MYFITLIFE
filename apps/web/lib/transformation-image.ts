@@ -1,9 +1,21 @@
 import sharp from 'sharp';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+export interface FaceCoord {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 type ProcessOptions = {
   anonymize: boolean;
   watermarkText: string;
+  /** Face bounding boxes in original image pixel space */
+  faces?: FaceCoord[];
+  /** Original image dimensions (needed to scale coords after resize) */
+  origWidth?: number;
+  origHeight?: number;
 };
 
 async function fetchImageBuffer(supabase: SupabaseClient, bucket: string, path: string): Promise<Buffer> {
@@ -33,6 +45,7 @@ function buildWatermarkSVG(width: number, height: number, text: string): string 
 }
 
 function buildAnonymizeSVG(width: number, height: number): string {
+  // Heuristic fallback: top-centre ellipse
   const cx = Math.round(width / 2);
   const cy = Math.round(height * 0.22);
   const rx = Math.round(width * 0.18);
@@ -40,6 +53,28 @@ function buildAnonymizeSVG(width: number, height: number): string {
   return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,0.85)"/>
   </svg>`;
+}
+
+function buildFaceMaskSVG(
+  width: number,
+  height: number,
+  faces: FaceCoord[],
+  origWidth: number,
+  origHeight: number
+): string {
+  // Scale factor from original → processed dimensions
+  const sx = origWidth > 0 ? width / origWidth : 1;
+  const sy = origHeight > 0 ? height / origHeight : 1;
+
+  const ellipses = faces.map((f) => {
+    const cx = (f.x + f.width / 2) * sx;
+    const cy = (f.y + f.height / 2) * sy;
+    const rx = (f.width / 2) * sx * 1.15;
+    const ry = (f.height / 2) * sy * 1.25;
+    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,0.95)"/>`;
+  }).join('');
+
+  return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">${ellipses}</svg>`;
 }
 
 export async function processTransformationImage(
@@ -58,7 +93,11 @@ export async function processTransformationImage(
   const overlays: sharp.OverlayOptions[] = [];
 
   if (opts.anonymize) {
-    overlays.push({ input: Buffer.from(buildAnonymizeSVG(width, height)), top: 0, left: 0 });
+    const hasFaces = opts.faces && opts.faces.length > 0 && opts.origWidth && opts.origHeight;
+    const maskSvg = hasFaces
+      ? buildFaceMaskSVG(width, height, opts.faces!, opts.origWidth!, opts.origHeight!)
+      : buildAnonymizeSVG(width, height);
+    overlays.push({ input: Buffer.from(maskSvg), top: 0, left: 0 });
   }
 
   overlays.push({ input: Buffer.from(buildWatermarkSVG(width, height, opts.watermarkText)), top: 0, left: 0 });

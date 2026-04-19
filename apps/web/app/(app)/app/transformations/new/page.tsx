@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 import { ArrowLeft, Loader2, Camera, Eye, EyeOff } from 'lucide-react';
+import { FaceMaskPreview } from '@/components/transformations/FaceMaskPreview';
+import type { DetectedFace } from '@/lib/hooks/useFaceDetection';
 
 const CATEGORIES = [
   { key: 'weight_loss', label: 'Emagrecimento' },
@@ -32,6 +34,22 @@ export default function NewTransformationPage() {
   const [displayName, setDisplayName] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showMask, setShowMask] = useState(true);
+  // Face detection results: faces + original image dimensions for server-side scaling
+  const [facesBefore, setFacesBefore] = useState<DetectedFace[]>([]);
+  const [facesAfter, setFacesAfter] = useState<DetectedFace[]>([]);
+  const [dimsBefore, setDimsBefore] = useState<{ w: number; h: number } | null>(null);
+  const [dimsAfter, setDimsAfter] = useState<{ w: number; h: number } | null>(null);
+
+  const handleFacesBefore = useCallback((faces: DetectedFace[], w: number, h: number) => {
+    setFacesBefore(faces);
+    if (w > 0 && h > 0) setDimsBefore({ w, h });
+  }, []);
+
+  const handleFacesAfter = useCallback((faces: DetectedFace[], w: number, h: number) => {
+    setFacesAfter(faces);
+    if (w > 0 && h > 0) setDimsAfter({ w, h });
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -68,6 +86,12 @@ export default function NewTransformationPage() {
         anonymized,
         display_name_override: displayName || undefined,
         accept_terms: true,
+        faces_before: facesBefore,
+        faces_after: facesAfter,
+        img_width_before: dimsBefore?.w,
+        img_height_before: dimsBefore?.h,
+        img_width_after: dimsAfter?.w,
+        img_height_after: dimsAfter?.h,
       }),
     });
     const data = await res.json();
@@ -132,6 +156,19 @@ export default function NewTransformationPage() {
             </button>
           ))}
         </div>
+        {anonymized && beforeId && (() => {
+          const photo = photos.find((p) => p.id === beforeId);
+          return photo ? (
+            <div className="mt-3 border-t pt-3">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Preview com anonimização</p>
+              <FaceMaskPreview
+                photoUrl={photo.url}
+                showMask={showMask}
+                onFacesDetected={handleFacesBefore}
+              />
+            </div>
+          ) : null;
+        })()}
       </Card>
 
       {/* Seleção de foto "depois" */}
@@ -156,6 +193,19 @@ export default function NewTransformationPage() {
             </button>
           ))}
         </div>
+        {anonymized && afterId && (() => {
+          const photo = photos.find((p) => p.id === afterId);
+          return photo ? (
+            <div className="mt-3 border-t pt-3">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Preview com anonimização</p>
+              <FaceMaskPreview
+                photoUrl={photo.url}
+                showMask={showMask}
+                onFacesDetected={handleFacesAfter}
+              />
+            </div>
+          ) : null;
+        })()}
       </Card>
 
       {/* Detalhes */}
@@ -218,6 +268,18 @@ export default function NewTransformationPage() {
             <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
           </div>
         </label>
+
+        {anonymized && (
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={showMask}
+              onChange={(e) => setShowMask(e.target.checked)}
+              className="h-4 w-4"
+            />
+            Mostrar preview com máscara no rosto
+          </label>
+        )}
 
         {anonymized && (
           <div>
