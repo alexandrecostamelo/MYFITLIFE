@@ -2,26 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { FOOD_VISION_SYSTEM_PROMPT, buildFoodVisionUserPrompt } from '@myfitlife/ai/prompts/food-vision';
-import { checkDailyLimit, logUsage } from '@/lib/rate-limit';
+import { logUsage } from '@/lib/rate-limit';
+import { enforceRateLimit } from '@/lib/rate-limit/with-rate-limit';
 import sharp from 'sharp';
 
 export const maxDuration = 60;
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const DAILY_LIMIT = 30;
 
 export async function POST(req: NextRequest) {
+  const gate = await enforceRateLimit(req, 'recognize_food');
+  if (gate instanceof NextResponse) return gate;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-
-  const limit = await checkDailyLimit(user.id, 'food_vision', DAILY_LIMIT);
-  if (!limit.allowed) {
-    return NextResponse.json(
-      { error: 'daily_limit_reached', message: `Limite diário de ${DAILY_LIMIT} análises atingido. Tente novamente amanhã.` },
-      { status: 429 }
-    );
-  }
 
   const formData = await req.formData();
   const file = formData.get('photo') as File | null;
@@ -160,11 +155,6 @@ export async function POST(req: NextRequest) {
       items: matchedItems,
       warnings: result.warnings || [],
       photo_path: photoUrl,
-      usage: {
-        used_today: limit.usedToday + 1,
-        remaining: limit.remaining - 1,
-        daily_limit: DAILY_LIMIT,
-      },
     });
   } catch (err) {
     console.error('[analyze-photo]', err);

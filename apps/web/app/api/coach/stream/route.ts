@@ -1,14 +1,18 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL, CLAUDE_FALLBACK_MODEL, estimateCost } from '@myfitlife/ai/client';
 import { COACH_SYSTEM } from '@myfitlife/ai/prompts/coach';
 import { checkAndIncrementLimit } from '@/lib/rate-limit-v2';
 import { checkPromptSafety } from '@/lib/prompt-safety';
 import { buildRichCoachContext } from '@/lib/coach-context';
+import { enforceRateLimit } from '@/lib/rate-limit/with-rate-limit';
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  const gate = await enforceRateLimit(req, 'coach_chat');
+  if (gate instanceof NextResponse) return gate;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response('unauthorized', { status: 401 });

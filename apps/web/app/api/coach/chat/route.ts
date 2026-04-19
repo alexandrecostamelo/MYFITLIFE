@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { buildCoachSystemPrompt } from '@myfitlife/ai/prompts/coach';
 import { getCachedResponse, setCachedResponse } from '@myfitlife/ai/cache';
+import { enforceRateLimit } from '@/lib/rate-limit/with-rate-limit';
 import { z } from 'zod';
 
 const bodySchema = z.object({
@@ -12,6 +13,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const gate = await enforceRateLimit(req, 'coach_chat');
+  if (gate instanceof NextResponse) return gate;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });

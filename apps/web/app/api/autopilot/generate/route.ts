@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { AUTOPILOT_DAILY_SYSTEM, buildAutopilotContext } from '@myfitlife/ai/prompts/autopilot';
+import { enforceRateLimit } from '@/lib/rate-limit/with-rate-limit';
 
 export const maxDuration = 60;
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const gate = await enforceRateLimit(req, 'autopilot_generate');
+  if (gate instanceof NextResponse) return gate;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
