@@ -120,6 +120,10 @@ export type Database = {
           difficulty: number;
           verified: boolean;
           created_at: string;
+          video_url: string | null;
+          video_source: 'youtube' | 'direct' | 'vimeo' | null;
+          form_tips: string[] | null;
+          pose_check_key: string | null;
         };
         Insert: Record<string, unknown>;
         Update: Record<string, unknown>;
@@ -921,6 +925,25 @@ export type Database = {
           created_at: string;
           reviewed_at: string | null;
           reviewed_by: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      form_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          exercise_id: string | null;
+          exercise_name: string;
+          pose_check_key: string;
+          duration_sec: number;
+          reps_detected: number;
+          avg_form_score: number;
+          best_form_score: number;
+          feedback_counts: any;
+          summary_cues: string[] | null;
+          recorded_at: string;
         };
         Insert: Record<string, unknown>;
         Update: Record<string, unknown>;

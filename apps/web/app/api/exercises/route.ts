@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from('exercises')
-    .select('id, slug, name_pt, category, primary_muscles, equipment, difficulty')
+    .select('id, slug, name_pt, category, primary_muscles, equipment, difficulty, video_url, video_source, form_tips, pose_check_key')
     .limit(50);
 
   if (category) query = query.eq('category', category);

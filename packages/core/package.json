@@ -15,6 +15,7 @@
     "./geo": "./src/geo/index.ts",
     "./scheduling": "./src/scheduling/index.ts",
     "./cycle": "./src/cycle/index.ts",
-    "./biomarkers": "./src/biomarkers/index.ts"
+    "./biomarkers": "./src/biomarkers/index.ts",
+    "./pose-rules": "./src/pose-rules/index.ts"
   }
 }

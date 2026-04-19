@@ -6,7 +6,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Play, Plus, Check, Loader2, Search, Camera, Dumbbell } from 'lucide-react';
+import { Play, Plus, Check, Loader2, Search, Camera, Dumbbell, Sparkles } from 'lucide-react';
+import { ExerciseVideo } from '@/components/exercise-video';
 
 type Exercise = {
   id: string;
@@ -15,6 +16,10 @@ type Exercise = {
   primary_muscles: string[];
   equipment: string[];
   difficulty: number;
+  video_url?: string | null;
+  video_source?: string | null;
+  form_tips?: string[] | null;
+  pose_check_key?: string | null;
 };
 
 type SetRow = { set_number: number; reps: string; weight_kg: string; rir: string };
@@ -221,6 +226,29 @@ export default function WorkoutPage() {
             ) : (
               <div className="space-y-3">
                 <div className="font-medium">{selectedExercise.name_pt}</div>
+
+                {selectedExercise.video_url && (
+                  <ExerciseVideo url={selectedExercise.video_url} source={selectedExercise.video_source} />
+                )}
+
+                {selectedExercise.pose_check_key && (
+                  <Button asChild variant="outline" size="sm" className="w-full">
+                    <Link href={`/app/form-analysis?exercise=${selectedExercise.id}&check=${selectedExercise.pose_check_key}`}>
+                      <Sparkles className="mr-2 h-4 w-4" /> Analisar minha forma
+                    </Link>
+                  </Button>
+                )}
+
+                {selectedExercise.form_tips && selectedExercise.form_tips.length > 0 && (
+                  <Card className="p-3 text-xs">
+                    <div className="mb-1 font-medium">Dicas de execução</div>
+                    <ul className="space-y-0.5 text-muted-foreground">
+                      {selectedExercise.form_tips.map((t: string, i: number) => (
+                        <li key={i}>• {t}</li>
+                      ))}
+                    </ul>
+                  </Card>
+                )}
                 <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
                   <div>Série</div><div>Reps</div><div>Peso (kg)</div><div>RIR</div>
                 </div>
