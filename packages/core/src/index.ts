@@ -8,3 +8,5 @@ export * from './biomarkers';
 export * from './pose-rules';
 export * from './muscles';
 export * from './challenges';
+export * from './skills';
+export * from './workout-sharing';

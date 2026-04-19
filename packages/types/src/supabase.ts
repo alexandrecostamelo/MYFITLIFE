@@ -952,6 +952,55 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      workout_templates: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          description: string | null;
+          is_public: boolean;
+          public_description: string | null;
+          objective: 'hypertrophy' | 'strength' | 'weight_loss' | 'endurance' | 'general_fitness' | 'rehab' | null;
+          difficulty: 'beginner' | 'intermediate' | 'advanced' | null;
+          copy_count: number;
+          last_published_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      workout_template_exercises: {
+        Row: {
+          id: string;
+          workout_template_id: string;
+          exercise_id: string | null;
+          order_index: number;
+          sets: number | null;
+          reps: string | null;
+          weight_kg: number | null;
+          rest_sec: number | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      workout_template_copies: {
+        Row: {
+          id: string;
+          source_template_id: string;
+          source_user_id: string;
+          copied_template_id: string;
+          copier_user_id: string;
+          copied_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       comparison_preferences: {
         Row: {
           user_id: string;

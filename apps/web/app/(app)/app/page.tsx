@@ -191,6 +191,18 @@ export default function AppHome() {
               <span className="text-xs">Habilidades</span>
             </Link>
           </Button>
+          <Button asChild variant="outline" className="h-auto flex-col gap-1 py-3">
+            <Link href="/app/discover/workouts">
+              <span className="text-lg">🔥</span>
+              <span className="text-xs">Descobrir treinos</span>
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="h-auto flex-col gap-1 py-3">
+            <Link href="/app/workout/templates">
+              <span className="text-lg">📋</span>
+              <span className="text-xs">Meus treinos</span>
+            </Link>
+          </Button>
         </div>
       </Card>
 

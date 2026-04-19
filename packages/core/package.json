@@ -18,6 +18,8 @@
     "./biomarkers": "./src/biomarkers/index.ts",
     "./pose-rules": "./src/pose-rules/index.ts",
     "./muscles": "./src/muscles/index.ts",
-    "./challenges": "./src/challenges/index.ts"
+    "./challenges": "./src/challenges/index.ts",
+    "./skills": "./src/skills/index.ts",
+    "./workout-sharing": "./src/workout-sharing/index.ts"
   }
 }
