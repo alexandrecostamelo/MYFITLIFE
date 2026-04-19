@@ -952,6 +952,57 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      comparison_preferences: {
+        Row: {
+          user_id: string;
+          share_stats: boolean;
+          share_workouts: boolean;
+          share_skills: boolean;
+          share_weight: boolean;
+          share_progress_photos: boolean;
+          share_biomarkers: boolean;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      skill_nodes: {
+        Row: {
+          id: string;
+          key: string;
+          name: string;
+          description: string | null;
+          category: 'strength' | 'calisthenics' | 'cardio' | 'mobility';
+          tier: number;
+          icon: string;
+          prereq_keys: string[];
+          unlock_criteria: any;
+          mastery_criteria: any;
+          xp_on_unlock: number;
+          xp_on_mastery: number;
+          order_in_tier: number;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      user_skills: {
+        Row: {
+          id: string;
+          user_id: string;
+          skill_key: string;
+          status: 'locked' | 'available' | 'in_progress' | 'mastered';
+          progress: any;
+          unlocked_at: string | null;
+          first_practice_at: string | null;
+          mastered_at: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       community_challenges: {
         Row: {
           id: string;

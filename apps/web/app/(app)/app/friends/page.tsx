@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, Check, X, UserPlus, Loader2, Flame, Trophy } from 'lucide-react';
+import { ArrowLeft, Search, Check, X, UserPlus, Loader2, Flame, Trophy, Swords } from 'lucide-react';
 
 type Friend = {
   friendship_id: string;
@@ -151,9 +151,16 @@ export default function FriendsPage() {
                     </div>
                   )}
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => remove(f.friendship_id)}>
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Link href={`/app/friends/${f.user.id}/compare`}>
+                    <Button size="sm" variant="outline">
+                      <Swords className="h-3 w-3" />
+                    </Button>
+                  </Link>
+                  <Button size="sm" variant="ghost" onClick={() => remove(f.friendship_id)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
