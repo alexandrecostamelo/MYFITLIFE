@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendEmail, weeklySummaryEmailHtml } from '@/lib/email';
+import { withHeartbeat } from '@/lib/monitoring/heartbeat';
 
 export const maxDuration = 300;
 
@@ -19,6 +20,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  return withHeartbeat('weekly_summary', async () => {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -74,4 +76,5 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ eligible: users?.length || 0, sent });
+  });
 }
