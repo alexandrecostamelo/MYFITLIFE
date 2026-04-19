@@ -185,6 +185,12 @@ export default function AppHome() {
               <span className="text-xs">Análise de forma</span>
             </Link>
           </Button>
+          <Button asChild variant="outline" className="h-auto flex-col gap-1 py-3">
+            <Link href="/app/skills">
+              <span className="text-lg">⚡</span>
+              <span className="text-xs">Habilidades</span>
+            </Link>
+          </Button>
         </div>
       </Card>
 
