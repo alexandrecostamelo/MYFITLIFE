@@ -17,6 +17,7 @@
     "./cycle": "./src/cycle/index.ts",
     "./biomarkers": "./src/biomarkers/index.ts",
     "./pose-rules": "./src/pose-rules/index.ts",
-    "./muscles": "./src/muscles/index.ts"
+    "./muscles": "./src/muscles/index.ts",
+    "./challenges": "./src/challenges/index.ts"
   }
 }

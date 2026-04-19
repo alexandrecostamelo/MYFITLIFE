@@ -7,3 +7,4 @@ export * from './cycle';
 export * from './biomarkers';
 export * from './pose-rules';
 export * from './muscles';
+export * from './challenges';

@@ -51,6 +51,19 @@ export default function ChallengesPage() {
         <h1 className="text-2xl font-bold">Desafios</h1>
       </header>
 
+      <Card className="mb-4 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 p-4 dark:border-amber-800 dark:from-amber-950 dark:to-orange-950">
+        <div className="flex items-center gap-3">
+          <Trophy className="h-8 w-8 text-amber-600" />
+          <div className="flex-1">
+            <h3 className="text-sm font-bold">Desafios da comunidade</h3>
+            <p className="text-xs text-muted-foreground">Eventos com todos os usuários da plataforma</p>
+          </div>
+          <Button asChild>
+            <Link href="/app/challenges/community">Ver</Link>
+          </Button>
+        </div>
+      </Card>
+
       <Button asChild className="mb-4 w-full">
         <Link href="/app/challenges/new">
           <Plus className="mr-2 h-4 w-4" /> Criar desafio

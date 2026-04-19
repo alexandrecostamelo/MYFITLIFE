@@ -949,6 +949,73 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      community_challenges: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          description: string | null;
+          category: 'strength' | 'cardio' | 'consistency' | 'nutrition' | 'flexibility' | 'mindset';
+          challenge_type: 'daily_reps' | 'total_reps' | 'daily_streak' | 'accumulated_minutes' | 'photo_habit';
+          target_value: number;
+          target_unit: string;
+          exercise_hint: string | null;
+          duration_days: number;
+          enrollment_start: string;
+          enrollment_end: string | null;
+          start_date: string;
+          end_date: string;
+          featured: boolean;
+          cover_emoji: string;
+          xp_on_complete: number;
+          min_participants: number;
+          max_participants: number | null;
+          status: 'draft' | 'enrollment' | 'active' | 'completed' | 'cancelled';
+          rules: string | null;
+          tips: string[];
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      community_challenge_participants: {
+        Row: {
+          id: string;
+          challenge_id: string;
+          user_id: string;
+          enrolled_at: string;
+          current_progress: number;
+          check_in_count: number;
+          longest_streak: number;
+          current_streak: number;
+          last_checkin_date: string | null;
+          completed_at: string | null;
+          abandoned_at: string | null;
+          final_rank: number | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      community_challenge_checkins: {
+        Row: {
+          id: string;
+          participant_id: string;
+          challenge_id: string;
+          user_id: string;
+          checkin_date: string;
+          value: number;
+          notes: string | null;
+          photo_path: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {};
