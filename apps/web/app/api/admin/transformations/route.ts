@@ -11,11 +11,22 @@ export async function GET(req: NextRequest) {
 
   const status = req.nextUrl.searchParams.get('status') || 'pending';
 
-  const { data: posts } = await supabase
+  // For pending queue: exclude auto_rejected (already handled), prioritise needs_review first
+  const query = supabase
     .from('transformation_posts')
     .select('*')
-    .eq('status', status)
-    .order('created_at', { ascending: status === 'pending' });
+    .eq('status', status);
+
+  if (status === 'pending') {
+    query
+      .neq('ai_moderation_status', 'auto_rejected')
+      .order('ai_moderation_status', { ascending: true })  // needs_review < auto_approved < pending
+      .order('created_at', { ascending: false });
+  } else {
+    query.order('created_at', { ascending: false });
+  }
+
+  const { data: posts } = await query;
 
   const userIds = Array.from(new Set((posts || []).map((p: Record<string, unknown>) => p.user_id as string)));
   const { data: profiles } = userIds.length > 0

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { processTransformationImage, type FaceCoord } from '@/lib/transformation-image';
+import { moderateTransformation } from '@myfitlife/ai/prompts/transformation-moderation';
 import { z } from 'zod';
 
 export const maxDuration = 60;
@@ -104,11 +105,20 @@ export async function POST(req: NextRequest) {
     status: 'pending',
     faces_detected_before: (parsed.data.faces_before || []).length,
     faces_detected_after: (parsed.data.faces_after || []).length,
+    ai_moderation_status: 'pending',
   }).select('id').single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ id: (data as Record<string, unknown>).id, status: 'pending' });
+  const postId = (data as Record<string, unknown>).id as string;
+  const caption = parsed.data.story || parsed.data.title || null;
+
+  // Fire-and-forget background moderation (does not block the response)
+  moderateInBackground(supabase, postId, beforeProcessed, afterProcessed, caption).catch((err) => {
+    console.error('[transformation-moderation] background task failed:', err);
+  });
+
+  return NextResponse.json({ id: postId, status: 'pending' });
 }
 
 export async function GET(req: NextRequest) {
@@ -152,4 +162,66 @@ export async function GET(req: NextRequest) {
   }));
 
   return NextResponse.json({ posts: enriched });
+}
+
+// ---------------------------------------------------------------------------
+// Background moderation — called after POST, does not block the response
+// ---------------------------------------------------------------------------
+async function moderateInBackground(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  postId: string,
+  beforePath: string,
+  afterPath: string,
+  caption: string | null
+) {
+  try {
+    const [beforeRes, afterRes] = await Promise.all([
+      supabase.storage.from('transformations-public').download(beforePath),
+      supabase.storage.from('transformations-public').download(afterPath),
+    ]);
+    if (!beforeRes.data || !afterRes.data) throw new Error('Failed to download processed photos');
+
+    const beforeBuf = Buffer.from(await beforeRes.data.arrayBuffer());
+    const afterBuf  = Buffer.from(await afterRes.data.arrayBuffer());
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error('ANTHROPIC_API_KEY missing');
+
+    const result = await moderateTransformation(
+      apiKey,
+      beforeBuf.toString('base64'),
+      afterBuf.toString('base64'),
+      'image/jpeg',
+      'image/jpeg',
+      caption
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updates: Record<string, any> = {
+      ai_moderation_status:     result.status,
+      ai_moderation_reasoning:  result.reasoning,
+      ai_moderation_flags:      result.flags,
+      ai_moderation_confidence: result.confidence,
+      ai_moderated_at:          new Date().toISOString(),
+    };
+
+    if (result.status === 'auto_rejected') {
+      updates.status = 'rejected';
+      updates.reject_reason = `IA: ${result.flags.join(', ')}. ${result.reasoning}`;
+    }
+
+    await supabase.from('transformation_posts').update(updates).eq('id', postId);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'unknown';
+    console.error('[transformation-moderation]', msg);
+    await supabase
+      .from('transformation_posts')
+      .update({
+        ai_moderation_status:    'error',
+        ai_moderation_reasoning: `Erro técnico: ${msg}`,
+        ai_moderated_at:         new Date().toISOString(),
+      })
+      .eq('id', postId);
+  }
 }
