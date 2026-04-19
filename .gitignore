@@ -19,3 +19,9 @@ android/build
 .claude/
 package-lock.json
 apps/web/tsconfig.tsbuildinfo
+
+# Test artifacts
+playwright-report/
+test-results/
+apps/web/playwright-report/
+apps/web/test-results/
