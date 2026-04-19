@@ -54,6 +54,9 @@ export type Database = {
           target_carbs_g: number | null;
           target_fats_g: number | null;
           target_water_ml: number | null;
+          show_in_public_rankings: boolean;
+          city: string | null;
+          state: string | null;
           created_at: string;
           updated_at: string;
         };
