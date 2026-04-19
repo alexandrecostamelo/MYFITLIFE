@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell, Trophy, Building2, UserX, Zap, Bell, Swords } from 'lucide-react';
+import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell, Trophy, Building2, UserX, Zap, Bell, Swords, BarChart3 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function ProfilePage() {
@@ -164,6 +164,13 @@ export default function ProfilePage() {
           <span className="text-sm font-medium">Tema</span>
           <ThemeToggle />
         </div>
+        <Link href="/app/reports" className="flex items-center justify-between p-4 hover:bg-muted">
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Relatórios mensais</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
         <Link href="/app/settings/comparison-privacy" className="flex items-center justify-between p-4 hover:bg-muted">
           <div className="flex items-center gap-3">
             <Swords className="h-4 w-4 text-muted-foreground" />
