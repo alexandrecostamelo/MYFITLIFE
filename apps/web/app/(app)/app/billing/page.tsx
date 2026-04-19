@@ -1,0 +1,152 @@
+'use client';
+
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Loader2, CheckCircle2, Star, Receipt } from 'lucide-react';
+
+const STATUS_LABEL: Record<string, string> = {
+  active: 'Ativa',
+  trialing: 'Período de teste',
+  past_due: 'Pagamento pendente',
+  canceled: 'Cancelada',
+  free: 'Gratuito',
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  active: 'text-green-600',
+  trialing: 'text-blue-600',
+  past_due: 'text-amber-600',
+  canceled: 'text-muted-foreground',
+  free: 'text-muted-foreground',
+};
+
+function BillingContent() {
+  const params = useSearchParams();
+  const stripeSuccess = params.get('stripe_success') === '1';
+
+  const [sub, setSub] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/me/subscription').then((r) => r.json()),
+      fetch('/api/billing/transactions').then((r) => r.json()),
+    ]).then(([subData, txData]) => {
+      setSub(subData.subscription);
+      setTransactions(txData.transactions || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  async function openStripePortal() {
+    setPortalLoading(true);
+    const res = await fetch('/api/billing/stripe/portal', { method: 'POST' });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else setPortalLoading(false);
+  }
+
+  if (loading) return <div className="p-6"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  const isPro = sub?.plan === 'pro' && sub?.status === 'active';
+
+  return (
+    <main className="mx-auto max-w-xl p-4">
+      <header className="mb-4 flex items-center gap-2">
+        <Link href="/app" className="rounded p-2 hover:bg-muted"><ArrowLeft className="h-5 w-5" /></Link>
+        <h1 className="text-2xl font-bold">Assinatura</h1>
+      </header>
+
+      {stripeSuccess && (
+        <Card className="mb-4 border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
+          <p className="text-sm font-medium text-green-800 dark:text-green-200">
+            <CheckCircle2 className="mr-2 inline h-4 w-4" />
+            Pagamento confirmado! Seu plano Pro está ativo.
+          </p>
+        </Card>
+      )}
+
+      {/* Status da assinatura */}
+      <Card className="mb-4 p-4">
+        <div className="mb-3 flex items-center gap-3">
+          {isPro ? (
+            <Star className="h-8 w-8 fill-primary text-primary" />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm">—</div>
+          )}
+          <div>
+            <p className="font-bold">{isPro ? 'MyFitLife Pro' : 'Plano Gratuito'}</p>
+            <p className={`text-sm ${STATUS_COLOR[sub?.status || 'free'] || 'text-muted-foreground'}`}>
+              {STATUS_LABEL[sub?.status || 'free'] || sub?.status}
+              {sub?.billing_cycle && ` · ${sub.billing_cycle === 'monthly' ? 'Mensal' : 'Anual'}`}
+            </p>
+          </div>
+        </div>
+
+        {sub?.current_period_end && (
+          <p className="mb-3 text-xs text-muted-foreground">
+            {sub.cancel_at_period_end ? 'Cancela em' : 'Renova em'}{' '}
+            {new Date(sub.current_period_end).toLocaleDateString('pt-BR')}
+          </p>
+        )}
+
+        {isPro && sub?.provider === 'stripe' && (
+          <Button onClick={openStripePortal} disabled={portalLoading} variant="outline" className="w-full">
+            {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Gerenciar cartão e cancelar'}
+          </Button>
+        )}
+
+        {!isPro && (
+          <Button asChild className="w-full">
+            <Link href="/app/plans">Ver planos</Link>
+          </Button>
+        )}
+      </Card>
+
+      {/* Histórico de transações */}
+      {transactions.length > 0 && (
+        <Card className="p-4">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
+            <Receipt className="h-4 w-4" /> Histórico de pagamentos
+          </h2>
+          <div className="space-y-2">
+            {transactions.map((t: any) => (
+              <div key={t.id} className="flex items-center justify-between text-sm">
+                <div>
+                  <p className="font-medium">{t.description || 'MyFitLife Pro'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(t.created_at).toLocaleDateString('pt-BR')} ·{' '}
+                    {t.method === 'pix' ? 'Pix' : t.method === 'card' ? 'Cartão' : t.method}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">R$ {(t.amount_cents / 100).toFixed(2).replace('.', ',')}</p>
+                  <p className={`text-xs ${
+                    t.status === 'paid' ? 'text-green-600' :
+                    t.status === 'pending' ? 'text-amber-600' :
+                    'text-destructive'
+                  }`}>
+                    {t.status === 'paid' ? 'Pago' : t.status === 'pending' ? 'Pendente' : t.status === 'failed' ? 'Falhou' : t.status}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </main>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="p-6"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+      <BillingContent />
+    </Suspense>
+  );
+}
