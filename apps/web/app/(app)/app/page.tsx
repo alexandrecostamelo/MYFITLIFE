@@ -66,13 +66,13 @@ export default function AppHome() {
       <Card className="mb-4 p-3">
         <div className="grid grid-cols-4 gap-2">
           <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
-            <Link href="/app/explore"><span className="text-lg">📍</span><span className="text-xs">Explorar</span></Link>
+            <Link href="/app/community"><span className="text-lg">💬</span><span className="text-xs">Comunidade</span></Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
             <Link href="/app/professionals"><span className="text-lg">👨‍⚕️</span><span className="text-xs">Profissionais</span></Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
-            <Link href="/app/friends"><span className="text-lg">👥</span><span className="text-xs">Amigos</span></Link>
+            <Link href="/app/explore"><span className="text-lg">📍</span><span className="text-xs">Academias</span></Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
             <Link href="/app/challenges"><span className="text-lg">🎯</span><span className="text-xs">Desafios</span></Link>

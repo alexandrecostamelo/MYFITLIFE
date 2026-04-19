@@ -504,6 +504,80 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      community_groups: {
+        Row: { id: string; slug: string; name: string; description: string | null; cover_emoji: string | null; category: string; member_count: number; created_at: string };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      group_members: {
+        Row: { id: string; group_id: string; user_id: string; role: 'member' | 'moderator'; joined_at: string };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      community_posts: {
+        Row: {
+          id: string;
+          author_id: string;
+          group_id: string | null;
+          content: string;
+          photo_path: string | null;
+          likes_count: number;
+          comments_count: number;
+          moderation_status: 'pending' | 'approved' | 'flagged' | 'removed';
+          moderation_reason: string | null;
+          moderation_score: any;
+          removed_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      post_likes: {
+        Row: { id: string; post_id: string; user_id: string; created_at: string };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      post_comments: {
+        Row: {
+          id: string;
+          post_id: string;
+          author_id: string;
+          content: string;
+          moderation_status: 'pending' | 'approved' | 'flagged' | 'removed';
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      content_reports: {
+        Row: {
+          id: string;
+          reporter_id: string;
+          target_type: 'post' | 'comment' | 'user';
+          target_id: string;
+          reason: string;
+          details: string | null;
+          status: 'pending' | 'reviewed' | 'dismissed';
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      user_blocks: {
+        Row: { id: string; blocker_id: string; blocked_id: string; created_at: string };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       professionals: {
         Row: {
           id: string;

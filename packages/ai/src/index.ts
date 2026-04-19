@@ -8,3 +8,4 @@ export * from './prompts/adaptive-workout';
 export * from './prompts/shopping-list';
 export * from './prompts/food-substitution';
 export * from './prompts/quests';
+export * from './prompts/moderation';
