@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { statusLabel } from '@myfitlife/core/challenges';
-import { ArrowLeft, Shield, Loader2, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Shield, Loader2, Star, Plus } from 'lucide-react';
 
 export default function AdminChallengesPage() {
   const [challenges, setChallenges] = useState<any[]>([]);
@@ -42,7 +43,10 @@ export default function AdminChallengesPage() {
       <header className="mb-4 flex items-center gap-2">
         <Link href="/app/gym-admin" className="rounded p-2 hover:bg-muted"><ArrowLeft className="h-5 w-5" /></Link>
         <Shield className="h-5 w-5 text-primary" />
-        <h1 className="text-2xl font-bold">Desafios da comunidade</h1>
+        <h1 className="flex-1 text-2xl font-bold">Desafios da comunidade</h1>
+        <Button asChild size="sm">
+          <Link href="/app/admin/challenges/new"><Plus className="mr-1 h-4 w-4" /> Criar</Link>
+        </Button>
       </header>
 
       {loading ? (
@@ -89,9 +93,6 @@ export default function AdminChallengesPage() {
         </div>
       )}
 
-      <p className="mt-4 text-xs text-muted-foreground">
-        Criar novo desafio: use a API <code>POST /api/admin/challenges</code> diretamente.
-      </p>
     </main>
   );
 }
