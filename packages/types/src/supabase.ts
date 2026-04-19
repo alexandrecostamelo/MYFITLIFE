@@ -952,6 +952,43 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      transformation_posts: {
+        Row: {
+          id: string;
+          user_id: string;
+          before_photo_path: string;
+          after_photo_path: string;
+          before_date: string | null;
+          after_date: string | null;
+          period_days: number | null;
+          category: 'weight_loss' | 'hypertrophy' | 'recomposition' | 'health' | 'mobility' | 'other';
+          title: string | null;
+          story: string | null;
+          anonymized: boolean;
+          display_name_override: string | null;
+          status: 'pending' | 'approved' | 'rejected' | 'removed';
+          reject_reason: string | null;
+          inspires_count: number;
+          featured: boolean;
+          created_at: string;
+          approved_at: string | null;
+          removed_at: string | null;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      transformation_inspires: {
+        Row: {
+          id: string;
+          post_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       workout_templates: {
         Row: {
           id: string;

@@ -203,6 +203,12 @@ export default function AppHome() {
               <span className="text-xs">Meus treinos</span>
             </Link>
           </Button>
+          <Button asChild variant="outline" className="h-auto flex-col gap-1 py-3">
+            <Link href="/app/transformations">
+              <span className="text-lg">✨</span>
+              <span className="text-xs">Transformações</span>
+            </Link>
+          </Button>
         </div>
       </Card>
 
