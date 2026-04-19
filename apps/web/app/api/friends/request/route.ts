@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { notifyFriendRequest } from '@/lib/push/events';
 
 const schema = z.object({ user_id: z.string().uuid() });
 
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
       .update({ status: 'pending', requester_id: user.id, addressee_id: parsed.data.user_id, updated_at: new Date().toISOString() })
       .eq('id', existing.id);
 
+    notifyFriendRequest(user.id, parsed.data.user_id).catch(console.error);
     return NextResponse.json({ ok: true });
   }
 
@@ -39,5 +41,6 @@ export async function POST(req: NextRequest) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  notifyFriendRequest(user.id, parsed.data.user_id).catch(console.error);
   return NextResponse.json({ ok: true });
 }

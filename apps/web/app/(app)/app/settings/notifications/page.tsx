@@ -19,6 +19,11 @@ type Prefs = {
   churn_recovery_email: boolean;
   quiet_hours_start: string;
   quiet_hours_end: string;
+  push_friend_request: boolean;
+  push_friend_workout: boolean;
+  push_challenge_invite: boolean;
+  push_chat_message: boolean;
+  push_friend_achievement: boolean;
 };
 
 const DEFAULT_PREFS: Prefs = {
@@ -31,6 +36,11 @@ const DEFAULT_PREFS: Prefs = {
   churn_recovery_email: true,
   quiet_hours_start: '22:00',
   quiet_hours_end: '07:00',
+  push_friend_request: true,
+  push_friend_workout: true,
+  push_challenge_invite: true,
+  push_chat_message: true,
+  push_friend_achievement: true,
 };
 
 export default function NotificationSettingsPage() {
@@ -91,6 +101,15 @@ export default function NotificationSettingsPage() {
         <Toggle label="Lembrete de refeição" checked={prefs.meal_reminder} onChange={() => toggle('meal_reminder')} />
         <Toggle label="Beber água" checked={prefs.water_reminder} onChange={() => toggle('water_reminder')} />
         <Toggle label="Hora de dormir" checked={prefs.sleep_reminder} onChange={() => toggle('sleep_reminder')} />
+      </Card>
+
+      <Card className="mb-4 p-4">
+        <h2 className="mb-3 text-sm font-medium">Social (push nativo no celular)</h2>
+        <Toggle label="Pedidos de amizade" checked={prefs.push_friend_request} onChange={() => toggle('push_friend_request')} />
+        <Toggle label="Amigos completaram treino" checked={prefs.push_friend_workout} onChange={() => toggle('push_friend_workout')} />
+        <Toggle label="Convites pra desafio" checked={prefs.push_challenge_invite} onChange={() => toggle('push_challenge_invite')} />
+        <Toggle label="Mensagens no marketplace" checked={prefs.push_chat_message} onChange={() => toggle('push_chat_message')} />
+        <Toggle label="Amigos desbloquearam conquistas" checked={prefs.push_friend_achievement} onChange={() => toggle('push_friend_achievement')} />
       </Card>
 
       <Card className="mb-4 p-4">

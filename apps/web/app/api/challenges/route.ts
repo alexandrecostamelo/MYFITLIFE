@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { notifyChallengeInvite } from '@/lib/push/events';
 
 const createSchema = z.object({
   title: z.string().min(3).max(80),
@@ -77,6 +78,12 @@ export async function POST(req: NextRequest) {
   }
 
   await supabase.from('challenge_participants').insert(participants);
+
+  if (parsed.data.invited_user_ids && parsed.data.invited_user_ids.length > 0) {
+    for (const invitedId of parsed.data.invited_user_ids) {
+      notifyChallengeInvite(user.id, invitedId, challenge.id, parsed.data.title).catch(console.error);
+    }
+  }
 
   return NextResponse.json({ id: challenge.id });
 }

@@ -62,7 +62,7 @@ export async function touchActivity(supabase: Client, userId: string) {
   return { streak: result.newStreak };
 }
 
-export async function checkAchievements(supabase: Client, userId: string) {
+export async function checkAchievements(supabase: Client, userId: string): Promise<string[]> {
   const [
     { data: allAch }, { data: unlocked }, { data: stats },
     { count: workoutCount }, { count: mealCount }, { count: checkinCount },
@@ -91,6 +91,8 @@ export async function checkAchievements(supabase: Client, userId: string) {
     streak: stats?.current_streak || 0, level: stats?.level || 1,
   };
 
+  const newlyUnlocked: string[] = [];
+
   for (const ach of allAch || []) {
     if (unlockedIds.has(ach.id)) continue;
     const c = ach.criteria as any;
@@ -108,9 +110,14 @@ export async function checkAchievements(supabase: Client, userId: string) {
 
     if (unlock) {
       const { error } = await supabase.from('user_achievements').insert({ user_id: userId, achievement_id: ach.id });
-      if (!error && ach.xp_reward > 0) {
-        await awardXp(supabase, userId, 'ACHIEVEMENT_UNLOCKED' as any, { refTable: 'achievements', refId: ach.id, description: `Desbloqueou: ${ach.title}`, multiplier: ach.xp_reward / 30 });
+      if (!error) {
+        newlyUnlocked.push(ach.title as string);
+        if (ach.xp_reward > 0) {
+          await awardXp(supabase, userId, 'ACHIEVEMENT_UNLOCKED' as any, { refTable: 'achievements', refId: ach.id, description: `Desbloqueou: ${ach.title}`, multiplier: ach.xp_reward / 30 });
+        }
       }
     }
   }
+
+  return newlyUnlocked;
 }
