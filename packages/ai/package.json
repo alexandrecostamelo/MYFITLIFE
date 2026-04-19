@@ -16,7 +16,8 @@
     "./prompts/shopping-list": "./src/prompts/shopping-list.ts",
     "./prompts/food-substitution": "./src/prompts/food-substitution.ts",
     "./prompts/quests": "./src/prompts/quests.ts",
-    "./prompts/moderation": "./src/prompts/moderation.ts"
+    "./prompts/moderation": "./src/prompts/moderation.ts",
+    "./prompts/lab-extraction": "./src/prompts/lab-extraction.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",

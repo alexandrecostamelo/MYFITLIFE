@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MorningCheckin } from '@/components/morning-checkin';
+import { ProactiveInbox } from '@/components/proactive-inbox';
 import Link from 'next/link';
 import { Loader2, Sparkles, Flame, Trophy } from 'lucide-react';
 
@@ -39,7 +40,10 @@ export default function AppHome() {
     setLoading(false);
   }
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => {
+    loadAll();
+    fetch('/api/coach/proactive', { method: 'POST' }).catch(() => {});
+  }, []);
 
   async function generatePlan() {
     setGenerating(true);
@@ -62,6 +66,10 @@ export default function AppHome() {
       </header>
 
       <StatsWidget />
+
+      <div className="mb-4">
+        <ProactiveInbox />
+      </div>
 
       <Card className="mb-4 p-3">
         <div className="grid grid-cols-4 gap-2">
@@ -140,6 +148,29 @@ export default function AppHome() {
           <Button asChild variant="outline" size="sm">
             <Link href="/app/insights/muscles">Ver</Link>
           </Button>
+        </div>
+      </Card>
+
+      <Card className="mb-4 p-4">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center justify-between rounded border px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">Exames</p>
+              <p className="text-xs text-muted-foreground">Biomarcadores</p>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/app/labs">Abrir</Link>
+            </Button>
+          </div>
+          <div className="flex items-center justify-between rounded border px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">Ciclo</p>
+              <p className="text-xs text-muted-foreground">Rastreamento</p>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/app/cycle">Abrir</Link>
+            </Button>
+          </div>
         </div>
       </Card>
 

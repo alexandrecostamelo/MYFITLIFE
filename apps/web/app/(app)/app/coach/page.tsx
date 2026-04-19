@@ -6,18 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Loader2 } from 'lucide-react';
 
-type Message = { role: 'user' | 'assistant'; content: string };
+type Message = { role: 'user' | 'assistant'; content: string; streaming?: boolean };
 
 export default function CoachPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [convId, setConvId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [messages]);
 
   async function send() {
     const text = input.trim();
@@ -27,19 +27,73 @@ export default function CoachPage() {
     setInput('');
     setLoading(true);
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setMessages((p) => [...p, { role: 'assistant', content: '', streaming: true }]);
+
     try {
-      const res = await fetch('/api/coach/chat', {
+      const res = await fetch('/api/coach/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, conversation_id: convId }),
+        body: JSON.stringify({ message: text }),
+        signal: controller.signal,
       });
-      const data = await res.json();
-      if (data.conversation_id) setConvId(data.conversation_id);
-      if (data.reply) setMessages((p) => [...p, { role: 'assistant', content: data.reply }]);
-    } catch {
-      setMessages((p) => [...p, { role: 'assistant', content: 'Tive um problema. Pode repetir?' }]);
+
+      if (!res.ok || !res.body) throw new Error('stream_error');
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6).trim();
+          if (payload === '[DONE]') break;
+          try {
+            const { text: chunk } = JSON.parse(payload);
+            if (chunk) {
+              setMessages((p) => {
+                const next = [...p];
+                const last = next[next.length - 1];
+                if (last?.streaming) {
+                  next[next.length - 1] = { ...last, content: last.content + chunk };
+                }
+                return next;
+              });
+            }
+          } catch { /* ignore parse errors */ }
+        }
+      }
+
+      setMessages((p) => {
+        const next = [...p];
+        const last = next[next.length - 1];
+        if (last?.streaming) next[next.length - 1] = { ...last, streaming: false };
+        return next;
+      });
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        setMessages((p) => {
+          const next = [...p];
+          const last = next[next.length - 1];
+          if (last?.streaming) {
+            next[next.length - 1] = { role: 'assistant', content: 'Tive um problema. Pode repetir?', streaming: false };
+          }
+          return next;
+        });
+      }
     } finally {
       setLoading(false);
+      abortRef.current = null;
     }
   }
 
@@ -61,10 +115,11 @@ export default function CoachPage() {
             <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
               <Card className={`max-w-[85%] whitespace-pre-wrap px-4 py-3 text-sm ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-white'}`}>
                 {m.content}
+                {m.streaming && <span className="inline-block w-2 animate-pulse">▋</span>}
               </Card>
             </div>
           ))}
-          {loading && (
+          {loading && messages[messages.length - 1]?.content === '' && messages[messages.length - 1]?.streaming && (
             <div className="flex justify-start">
               <Card className="bg-white px-4 py-3"><Loader2 className="h-4 w-4 animate-spin" /></Card>
             </div>

@@ -578,6 +578,87 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      proactive_messages: {
+        Row: {
+          id: string;
+          user_id: string;
+          trigger_type: string;
+          title: string;
+          content: string;
+          severity: 'info' | 'suggestion' | 'warning';
+          action_label: string | null;
+          action_url: string | null;
+          read_at: string | null;
+          dismissed_at: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      menstrual_settings: {
+        Row: {
+          user_id: string;
+          tracking_enabled: boolean;
+          average_cycle_length: number | null;
+          average_period_length: number | null;
+          last_updated: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      menstrual_cycles: {
+        Row: {
+          id: string;
+          user_id: string;
+          period_start: string;
+          period_end: string | null;
+          symptoms: string[] | null;
+          flow_intensity: 'light' | 'medium' | 'heavy' | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      lab_exams: {
+        Row: {
+          id: string;
+          user_id: string;
+          file_path: string | null;
+          exam_date: string | null;
+          lab_name: string | null;
+          title: string | null;
+          raw_extraction: any;
+          processed: boolean;
+          processing_error: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      biomarkers: {
+        Row: {
+          id: string;
+          user_id: string;
+          lab_exam_id: string | null;
+          marker_key: string;
+          marker_name: string;
+          value: number;
+          unit: string;
+          reference_min: number | null;
+          reference_max: number | null;
+          status: 'normal' | 'low' | 'high' | 'critical_low' | 'critical_high' | null;
+          measured_at: string;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       professional_availability: {
         Row: {
           id: string;

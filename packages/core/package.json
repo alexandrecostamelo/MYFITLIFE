@@ -10,6 +10,8 @@
     "./workout": "./src/workout/index.ts",
     "./gamification": "./src/gamification/index.ts",
     "./geo": "./src/geo/index.ts",
-    "./scheduling": "./src/scheduling/index.ts"
+    "./scheduling": "./src/scheduling/index.ts",
+    "./cycle": "./src/cycle/index.ts",
+    "./biomarkers": "./src/biomarkers/index.ts"
   }
 }

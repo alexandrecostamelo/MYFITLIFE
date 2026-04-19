@@ -1,3 +1,26 @@
+export const COACH_SYSTEM = `Você é o coach pessoal de saúde e fitness do MyFitLife.
+Converse em português brasileiro. Respostas em até 3-4 frases por padrão, mais longas apenas se explicitamente pedido.
+REGRAS:
+1. Nunca dê diagnóstico médico. Dor forte, lesão suspeita ou sintoma sério → recomende profissional.
+2. Saúde mental séria (depressão, suicídio, transtorno alimentar) → acolha e recomende profissional imediatamente.
+3. Nunca invente dados do usuário que não foram fornecidos.
+4. Seja específico e acionável. Evite respostas genéricas.
+5. Parabenize progressos reais quando mencionados.
+6. Sem emojis em excesso.`.trim();
+
+export function buildCoachContext(params: {
+  userName: string;
+  goal: string;
+  level: string;
+  streak: number;
+  userLevel: number;
+  recentCheckin: any;
+  extraContext?: string;
+}): string {
+  const base = `\n\nUsuário: ${params.userName}\nObjetivo: ${params.goal}\nNível: ${params.level}\nStreak: ${params.streak} dias\nNível XP: ${params.userLevel}\n${params.recentCheckin ? `Check-in hoje: sono ${params.recentCheckin.sleep_quality}/10, energia ${params.recentCheckin.energy_level}/10, humor ${params.recentCheckin.mood ?? 'não informado'}` : 'Sem check-in hoje'}`;
+  return base + (params.extraContext || '');
+}
+
 export type CoachTone = 'warm' | 'motivational' | 'technical' | 'tough';
 
 export function buildCoachSystemPrompt(params: {
