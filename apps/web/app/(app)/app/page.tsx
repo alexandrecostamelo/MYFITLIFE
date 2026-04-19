@@ -7,6 +7,7 @@ import { MorningCheckin } from '@/components/morning-checkin';
 import { ProactiveInbox } from '@/components/proactive-inbox';
 import Link from 'next/link';
 import { Loader2, Sparkles, Flame, Trophy } from 'lucide-react';
+import { MuscleWidget } from '@/components/muscle-widget';
 
 export default function AppHome() {
   const [profile, setProfile] = useState<any>(null);
@@ -139,17 +140,7 @@ export default function AppHome() {
         </div>
       </Card>
 
-      <Card className="mb-4 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-medium">Análise muscular</h2>
-            <p className="text-xs text-muted-foreground">Heatmap de músculos trabalhados</p>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/app/insights/muscles">Ver</Link>
-          </Button>
-        </div>
-      </Card>
+      <MuscleWidget />
 
       <Card className="mb-4 p-4">
         <div className="grid grid-cols-2 gap-2">
