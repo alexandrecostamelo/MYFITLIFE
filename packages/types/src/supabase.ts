@@ -578,6 +578,54 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      ai_response_cache: {
+        Row: {
+          id: string;
+          cache_key: string;
+          feature: string;
+          response_text: string;
+          hit_count: number;
+          last_hit_at: string;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      rate_limits: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          identifier: string | null;
+          bucket: string;
+          window_start: string;
+          count: number;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      ai_usage_metrics: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          feature: string;
+          model: string;
+          input_tokens: number;
+          output_tokens: number;
+          cached_tokens: number;
+          cost_estimate_usd: number;
+          latency_ms: number | null;
+          cache_hit: boolean;
+          fallback_used: boolean;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       proactive_messages: {
         Row: {
           id: string;

@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { FOOD_SUBSTITUTION_SYSTEM, buildSubstitutionContext } from '@myfitlife/ai/prompts/food-substitution';
-import { checkDailyLimit, logUsage } from '@/lib/rate-limit';
+import { callAI } from '@/lib/ai-call';
+import { checkAndIncrementLimit } from '@/lib/rate-limit-v2';
+import { checkPromptSafety } from '@/lib/prompt-safety';
 import { z } from 'zod';
 
 export const maxDuration = 30;
-
-const DAILY_LIMIT = 30;
 
 const bodySchema = z.object({
   food_name: z.string().min(1).max(100),
@@ -23,13 +22,16 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const limit = await checkDailyLimit(user.id, 'food_substitution', DAILY_LIMIT);
+  const limit = await checkAndIncrementLimit(supabase, user.id, 'food_substitution');
   if (!limit.allowed) {
-    return NextResponse.json({ error: 'daily_limit_reached' }, { status: 429 });
+    return NextResponse.json({ error: 'daily_limit_reached', reset_at: limit.resetAt }, { status: 429 });
   }
 
   const parsed = bodySchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: 'invalid' }, { status: 400 });
+
+  const safety = checkPromptSafety(parsed.data.food_name);
+  if (!safety.safe) return NextResponse.json({ error: 'unsafe_input' }, { status: 400 });
 
   const { data: up } = await supabase
     .from('user_profiles')
@@ -38,37 +40,32 @@ export async function POST(req: NextRequest) {
     .single();
 
   const context = buildSubstitutionContext({
-    originalName: parsed.data.food_name,
+    originalName: safety.sanitized,
     originalAmountG: parsed.data.amount_g,
     userRestrictions: up?.food_restrictions || [],
     userPreferences: up?.diet_preference || undefined,
   });
 
-  const anthropic = getAnthropicClient();
+  const cacheInput = `${safety.sanitized}|${parsed.data.amount_g || ''}|${(up?.food_restrictions || []).sort().join(',')}|${up?.diet_preference || ''}`;
 
   try {
-    const response = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 1500,
+    const result = await callAI({
+      feature: 'food_substitution',
+      userId: user.id,
       system: FOOD_SUBSTITUTION_SYSTEM,
       messages: [{ role: 'user', content: context }],
+      max_tokens: 1500,
+      cache_input: cacheInput,
+      cache_ttl_minutes: 60 * 24 * 7,
     });
 
-    const text = response.content
-      .filter((c) => c.type === 'text')
-      .map((c) => ('text' in c ? c.text : ''))
-      .join('\n');
+    const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return NextResponse.json({ error: 'ai_no_json' }, { status: 500 });
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      await logUsage(user.id, 'food_substitution', 1);
-      return NextResponse.json({ error: 'ai_no_json' }, { status: 500 });
-    }
-
-    const result = JSON.parse(jsonMatch[0]);
+    const aiResult = JSON.parse(jsonMatch[0]);
 
     const substitutions = await Promise.all(
-      (result.substitutions || []).map(async (sub: any) => {
+      (aiResult.substitutions || []).map(async (sub: any) => {
         const searchTerm = normalize(sub.name);
         const { data: matches } = await supabase
           .from('foods')
@@ -92,14 +89,13 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    await logUsage(user.id, 'food_substitution', 1);
-
     return NextResponse.json({
-      original: result.original,
+      original: aiResult.original,
       substitutions,
-      tips: result.tips,
+      tips: aiResult.tips,
+      _cached: result.cached,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('[food-substitution]', err);
     return NextResponse.json({ error: 'ai_error' }, { status: 500 });
   }

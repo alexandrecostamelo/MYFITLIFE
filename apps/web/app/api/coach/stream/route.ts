@@ -1,87 +1,109 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
-import { COACH_SYSTEM, buildCoachContext } from '@myfitlife/ai/prompts/coach';
-import { computeCurrentPhase, cycleTrainingHints, cycleNutritionHints } from '@myfitlife/core/cycle';
-import { checkDailyLimit, logUsage } from '@/lib/rate-limit';
+import { getAnthropicClient, CLAUDE_MODEL, CLAUDE_FALLBACK_MODEL, estimateCost } from '@myfitlife/ai/client';
+import { COACH_SYSTEM } from '@myfitlife/ai/prompts/coach';
+import { checkAndIncrementLimit } from '@/lib/rate-limit-v2';
+import { checkPromptSafety } from '@/lib/prompt-safety';
+import { buildRichCoachContext } from '@/lib/coach-context';
 
 export const maxDuration = 60;
-
-const DAILY_LIMIT = 30;
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response('unauthorized', { status: 401 });
 
-  const limit = await checkDailyLimit(user.id, 'coach_stream', DAILY_LIMIT);
-  if (!limit.allowed) return new Response('daily_limit_reached', { status: 429 });
+  const limit = await checkAndIncrementLimit(supabase, user.id, 'coach_stream');
+  if (!limit.allowed) {
+    return new Response(JSON.stringify({ error: 'daily_limit_reached', reset_at: limit.resetAt }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   const { message, history } = await req.json();
   if (!message || typeof message !== 'string') return new Response('invalid', { status: 400 });
 
-  const [profileRes, upRes, statsRes, checkinRes, cycleSettingsRes, cycleLastRes] = await Promise.all([
-    supabase.from('profiles').select('full_name').eq('id', user.id).single(),
-    supabase.from('user_profiles').select('primary_goal, experience_level').eq('user_id', user.id).single(),
-    supabase.from('user_stats').select('level, current_streak').eq('user_id', user.id).maybeSingle(),
-    supabase.from('morning_checkins').select('sleep_quality, energy_level, mood').eq('user_id', user.id).eq('checkin_date', new Date().toISOString().slice(0, 10)).maybeSingle(),
-    supabase.from('menstrual_settings').select('*').eq('user_id', user.id).maybeSingle(),
-    supabase.from('menstrual_cycles').select('period_start').eq('user_id', user.id).order('period_start', { ascending: false }).limit(1).maybeSingle(),
-  ]);
-
-  let cycleContext = '';
-  if (cycleSettingsRes.data?.tracking_enabled && cycleLastRes.data) {
-    const phase = computeCurrentPhase({
-      lastPeriodStart: cycleLastRes.data.period_start,
-      averageCycleLength: cycleSettingsRes.data.average_cycle_length || 28,
-      averagePeriodLength: cycleSettingsRes.data.average_period_length || 5,
+  const safety = checkPromptSafety(message);
+  if (!safety.safe) {
+    return new Response(JSON.stringify({ error: 'unsafe_prompt', reason: safety.reason }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
     });
-    if (phase.phase !== 'unknown') {
-      cycleContext = `\nFase do ciclo: ${phase.phase} (dia ${phase.dayInCycle}). Treino: ${cycleTrainingHints(phase.phase)} Nutrição: ${cycleNutritionHints(phase.phase)}`;
-    }
   }
 
-  const context = buildCoachContext({
-    userName: profileRes.data?.full_name?.split(' ')[0] || 'você',
-    goal: upRes.data?.primary_goal || 'general_health',
-    level: upRes.data?.experience_level || 'beginner',
-    streak: statsRes.data?.current_streak || 0,
-    userLevel: statsRes.data?.level || 1,
-    recentCheckin: checkinRes.data || null,
-    extraContext: cycleContext,
-  });
+  const richContext = await buildRichCoachContext(supabase, user.id);
 
-  const anthropic = getAnthropicClient();
-  const messages = (history || []).slice(-10).map((m: any) => ({ role: m.role, content: m.content }));
-  messages.push({ role: 'user', content: message });
+  const messages = (history || []).slice(-10).map((m: any) => ({
+    role: m.role as 'user' | 'assistant',
+    content: typeof m.content === 'string' ? m.content : String(m.content),
+  }));
+  messages.push({ role: 'user', content: safety.sanitized });
 
   const encoder = new TextEncoder();
+  const startedAt = Date.now();
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let modelUsed = CLAUDE_MODEL;
+  let fallbackUsed = false;
 
   const stream = new ReadableStream({
     async start(controller) {
-      try {
-        const response = await anthropic.messages.stream({
-          model: CLAUDE_MODEL,
-          max_tokens: 1200,
-          system: COACH_SYSTEM + context,
-          messages,
-        });
+      const anthropic = getAnthropicClient();
 
-        for await (const event of response) {
-          if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`));
+      const tryStream = async (model: string): Promise<boolean> => {
+        try {
+          const response = anthropic.messages.stream({
+            model,
+            max_tokens: 1200,
+            system: COACH_SYSTEM + '\n\n' + richContext,
+            messages,
+          });
+
+          for await (const event of response) {
+            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`));
+            }
           }
+
+          const finalMessage = await response.finalMessage();
+          totalInputTokens = finalMessage.usage.input_tokens;
+          totalOutputTokens = finalMessage.usage.output_tokens;
+          modelUsed = model;
+          return true;
+        } catch (err: any) {
+          const status = err?.status || err?.response?.status;
+          const isRetriable = status === 429 || status === 500 || status === 502 || status === 503 || status === 529;
+          return !isRetriable;
         }
+      };
 
-        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
-        controller.close();
+      const primaryOk = await tryStream(CLAUDE_MODEL);
 
-        await logUsage(user.id, 'coach_stream', 1);
-      } catch (err: any) {
-        console.error('[coach/stream]', err);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: err.message || 'ai_error' })}\n\n`));
-        controller.close();
+      if (!primaryOk) {
+        fallbackUsed = true;
+        const fallbackOk = await tryStream(CLAUDE_FALLBACK_MODEL);
+        if (!fallbackOk) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'ai_error' })}\n\n`));
+        }
       }
+
+      controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+      controller.close();
+
+      const cost = estimateCost(modelUsed, totalInputTokens, totalOutputTokens);
+      await supabase.from('ai_usage_metrics').insert({
+        user_id: user.id,
+        feature: 'coach_stream',
+        model: modelUsed,
+        input_tokens: totalInputTokens,
+        output_tokens: totalOutputTokens,
+        cached_tokens: 0,
+        cost_estimate_usd: cost,
+        latency_ms: Date.now() - startedAt,
+        cache_hit: false,
+        fallback_used: fallbackUsed,
+      });
     },
   });
 
