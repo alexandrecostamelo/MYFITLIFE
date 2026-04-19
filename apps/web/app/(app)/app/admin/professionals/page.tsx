@@ -51,11 +51,12 @@ export default function AdminProfessionalsPage() {
       </header>
 
       <Card className="mb-4 p-2">
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-5 gap-1">
           <Button asChild variant="ghost" size="sm"><Link href="/app/admin/claims">Claims</Link></Button>
-          <Button asChild variant="default" size="sm"><Link href="/app/admin/professionals">Profissionais</Link></Button>
+          <Button asChild variant="default" size="sm"><Link href="/app/admin/professionals">Pros</Link></Button>
           <Button asChild variant="ghost" size="sm"><Link href="/app/admin/reports">Denúncias</Link></Button>
           <Button asChild variant="ghost" size="sm"><Link href="/app/admin/ai-metrics">IA</Link></Button>
+          <Button asChild variant="ghost" size="sm"><Link href="/app/admin/feature-flags">Flags</Link></Button>
         </div>
       </Card>
 

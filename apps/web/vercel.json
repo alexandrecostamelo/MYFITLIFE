@@ -1,0 +1,8 @@
+{
+  "crons": [
+    { "path": "/api/cron/daily-autopilot", "schedule": "0 8 * * *" },
+    { "path": "/api/cron/proactive-check", "schedule": "0 17 * * *" },
+    { "path": "/api/cron/weekly-summary", "schedule": "0 12 * * 1" },
+    { "path": "/api/cron/cleanup", "schedule": "0 4 * * *" }
+  ]
+}

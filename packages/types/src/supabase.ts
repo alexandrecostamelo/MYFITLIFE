@@ -578,6 +578,73 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      feature_flags: {
+        Row: {
+          id: string;
+          key: string;
+          name: string;
+          description: string | null;
+          enabled: boolean;
+          rollout_pct: number;
+          target_user_ids: string[] | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      notification_preferences: {
+        Row: {
+          user_id: string;
+          push_enabled: boolean;
+          email_enabled: boolean;
+          workout_reminder: boolean;
+          meal_reminder: boolean;
+          water_reminder: boolean;
+          sleep_reminder: boolean;
+          weekly_summary_email: boolean;
+          churn_recovery_email: boolean;
+          quiet_hours_start: string | null;
+          quiet_hours_end: string | null;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          keys_p256dh: string;
+          keys_auth: string;
+          user_agent: string | null;
+          created_at: string;
+          last_used_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      email_logs: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          to_email: string;
+          template: string;
+          subject: string;
+          status: 'pending' | 'sent' | 'failed' | 'bounced';
+          provider_id: string | null;
+          error_message: string | null;
+          sent_at: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       ai_response_cache: {
         Row: {
           id: string;

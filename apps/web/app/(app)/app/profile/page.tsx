@@ -6,7 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell, Trophy, Building2, UserX, Zap } from 'lucide-react';
+import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell, Trophy, Building2, UserX, Zap, Bell } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -145,14 +146,25 @@ export default function ProfilePage() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Link>
         ) : null}
-        <Link href="/app/usage" className="flex items-center justify-between p-4 hover:bg-slate-50">
+        <Link href="/app/usage" className="flex items-center justify-between p-4 hover:bg-muted">
           <div className="flex items-center gap-3">
             <Zap className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">Uso de IA</span>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </Link>
-        <Link href="/app/blocks" className="flex items-center justify-between p-4 hover:bg-slate-50">
+        <Link href="/app/settings/notifications" className="flex items-center justify-between p-4 hover:bg-muted">
+          <div className="flex items-center gap-3">
+            <Bell className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">Notificações</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+        <div className="flex items-center justify-between p-4">
+          <span className="text-sm font-medium">Tema</span>
+          <ThemeToggle />
+        </div>
+        <Link href="/app/blocks" className="flex items-center justify-between p-4 hover:bg-muted">
           <div className="flex items-center gap-3">
             <UserX className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">Usuários bloqueados</span>
