@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { Fingerprint } from 'lucide-react';
 
 type Mode = 'login' | 'signup' | 'magic';
 
@@ -22,6 +23,37 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
+  const [biometryAvailable, setBiometryAvailable] = useState(false);
+
+  useEffect(() => {
+    import('@/lib/biometric-auth').then(({ isBiometryAvailable, getBiometricCredentials }) => {
+      isBiometryAvailable().then((available) => {
+        if (available) {
+          getBiometricCredentials().then((creds) => {
+            if (creds) setBiometryAvailable(true);
+          });
+        }
+      });
+    });
+  }, []);
+
+  async function handleBiometricLogin() {
+    setLoading(true);
+    setError(null);
+    try {
+      const { authenticateWithBiometry, getBiometricCredentials } = await import('@/lib/biometric-auth');
+      const verified = await authenticateWithBiometry('Entre no MyFitLife');
+      if (!verified) { setError('Biometria não verificada.'); return; }
+      const creds = await getBiometricCredentials();
+      if (!creds) { setError('Credenciais não encontradas.'); return; }
+      const { error } = await supabase.auth.signInWithPassword({ email: creds.email, password: creds.password });
+      if (error) { setError(error.message); return; }
+      router.push('/app');
+      router.refresh();
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleLogin() {
     setLoading(true);
@@ -29,6 +61,12 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) { setError(error.message); return; }
+    // Save credentials for biometric login on next visit
+    import('@/lib/biometric-auth').then(({ isBiometryAvailable, saveBiometricCredentials }) => {
+      isBiometryAvailable().then((available) => {
+        if (available) saveBiometricCredentials(email, password);
+      });
+    });
     router.push('/app');
     router.refresh();
   }
@@ -120,9 +158,22 @@ export default function LoginPage() {
             {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
 
             {mode === 'login' && (
-              <Button onClick={handleLogin} disabled={disabled} className="w-full">
-                {loading ? 'Entrando...' : 'Entrar'}
-              </Button>
+              <>
+                <Button onClick={handleLogin} disabled={disabled} className="w-full">
+                  {loading ? 'Entrando...' : 'Entrar'}
+                </Button>
+                {biometryAvailable && (
+                  <Button
+                    onClick={handleBiometricLogin}
+                    disabled={loading}
+                    variant="outline"
+                    className="mt-2 w-full"
+                  >
+                    <Fingerprint className="mr-2 h-4 w-4" />
+                    Entrar com biometria
+                  </Button>
+                )}
+              </>
             )}
             {mode === 'signup' && (
               <label className="mb-3 flex items-start gap-2 text-xs">
