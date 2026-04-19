@@ -10,6 +10,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
+    "./cache": "./src/cache/index.ts",
     "./prompts/onboarding": "./src/prompts/onboarding.ts",
     "./prompts/coach": "./src/prompts/coach.ts",
     "./prompts/autopilot": "./src/prompts/autopilot.ts",
@@ -25,6 +26,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
+    "@supabase/supabase-js": "^2.45.4",
     "zod": "^3.23.8"
   }
 }

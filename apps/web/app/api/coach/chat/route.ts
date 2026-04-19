@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { buildCoachSystemPrompt } from '@myfitlife/ai/prompts/coach';
+import { getCachedResponse, setCachedResponse } from '@myfitlife/ai/cache';
 import { z } from 'zod';
 
 const bodySchema = z.object({
   conversation_id: z.string().uuid().optional(),
   message: z.string().min(1),
+  no_cache: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -56,6 +58,27 @@ export async function POST(req: NextRequest) {
     targetProteinG: up?.target_protein_g,
   });
 
+  const bypassCache = parsed.data.no_cache === true;
+  const isFirstMessage = (history || []).length === 1;
+
+  // Cache lookup — only for first message in conversation (generic questions)
+  if (!bypassCache && isFirstMessage) {
+    const cached = await getCachedResponse(parsed.data.message, {
+      context: 'coach_general',
+      model: CLAUDE_MODEL,
+    });
+    if (cached) {
+      await supabase.from('coach_messages').insert({
+        conversation_id: convId,
+        role: 'assistant',
+        content: cached,
+        model: CLAUDE_MODEL,
+        tokens_used: 0,
+      });
+      return NextResponse.json({ conversation_id: convId, reply: cached, cached: true });
+    }
+  }
+
   const anthropic = getAnthropicClient();
 
   try {
@@ -82,7 +105,18 @@ export async function POST(req: NextRequest) {
       tokens_used: response.usage.input_tokens + response.usage.output_tokens,
     });
 
-    return NextResponse.json({ conversation_id: convId, reply });
+    // Cache set — only for first message (generic question, no personal context)
+    if (!bypassCache && isFirstMessage) {
+      setCachedResponse(
+        parsed.data.message,
+        reply,
+        response.usage.input_tokens,
+        response.usage.output_tokens,
+        { context: 'coach_general', model: CLAUDE_MODEL }
+      ).catch((err) => console.error('[coach/chat] cache set failed:', err));
+    }
+
+    return NextResponse.json({ conversation_id: convId, reply, cached: false });
   } catch (err) {
     console.error('[coach/chat]', err);
     return NextResponse.json({ error: 'ai_error' }, { status: 500 });
