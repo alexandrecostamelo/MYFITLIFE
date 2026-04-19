@@ -176,6 +176,25 @@ export default function ProfessionalDetailPage() {
       )}
 
       <Card className="mb-4 p-4">
+        <div className="grid grid-cols-2 gap-2">
+          <Button asChild>
+            <Link href={`/app/professionals/${id}/book`}>Agendar consulta</Link>
+          </Button>
+          <Button asChild variant="outline" onClick={async () => {
+            const res = await fetch('/api/threads', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ professional_id: id }),
+            });
+            const t = await res.json();
+            window.location.href = `/app/threads/${t.id}`;
+          }}>
+            <span>Enviar mensagem</span>
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="mb-4 p-4">
         <h3 className="mb-2 text-sm font-medium">Contato</h3>
         <div className="space-y-2">
           {pro.whatsapp && (

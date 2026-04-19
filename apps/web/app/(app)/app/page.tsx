@@ -81,9 +81,15 @@ export default function AppHome() {
       </Card>
 
       <Card className="mb-4 p-3">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
-            <Link href="/app/reports/weekly"><span className="text-lg">📅</span><span className="text-xs">Sua semana</span></Link>
+            <Link href="/app/appointments"><span className="text-lg">📅</span><span className="text-xs">Agendamentos</span></Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
+            <Link href="/app/threads"><span className="text-lg">💌</span><span className="text-xs">Conversas</span></Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
+            <Link href="/app/reports/weekly"><span className="text-lg">📊</span><span className="text-xs">Sua semana</span></Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="h-auto flex-col gap-1 py-2">
             <Link href="/app/reports/wrapped"><span className="text-lg">✨</span><span className="text-xs">Wrapped</span></Link>

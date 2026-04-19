@@ -578,6 +578,85 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      professional_availability: {
+        Row: {
+          id: string;
+          professional_id: string;
+          weekday: number;
+          start_time: string;
+          end_time: string;
+          slot_duration_min: number;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      professional_blocked_dates: {
+        Row: {
+          id: string;
+          professional_id: string;
+          blocked_date: string;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      appointments: {
+        Row: {
+          id: string;
+          professional_id: string;
+          client_id: string;
+          scheduled_at: string;
+          duration_min: number;
+          status: 'requested' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+          client_notes: string | null;
+          professional_notes: string | null;
+          meeting_url: string | null;
+          modality: 'online' | 'presencial' | 'domiciliar' | null;
+          price: number | null;
+          share_history: boolean;
+          cancelled_by: string | null;
+          cancelled_at: string | null;
+          cancel_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      professional_threads: {
+        Row: {
+          id: string;
+          professional_id: string;
+          client_id: string;
+          last_message_at: string | null;
+          client_unread: number;
+          professional_unread: number;
+          archived: boolean;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      professional_messages: {
+        Row: {
+          id: string;
+          thread_id: string;
+          sender_id: string;
+          content: string;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       professionals: {
         Row: {
           id: string;

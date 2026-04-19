@@ -138,6 +138,12 @@ export default function MyProfessionalPage() {
         </p>
       </Card>
 
+      <Card className="mb-4 p-4">
+        <Button asChild variant="outline" className="w-full">
+          <Link href="/app/professionals/mine/availability">Configurar horários de atendimento</Link>
+        </Button>
+      </Card>
+
       <Card className="mb-4 space-y-3 p-4">
         <h3 className="text-sm font-medium">Editar informações</h3>
         <EditField label="Bio" value={pro.bio || ''} onSave={(v) => update('bio', v)} multiline />
