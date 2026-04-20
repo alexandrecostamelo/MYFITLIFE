@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from '@/lib/push';
 import { withHeartbeat } from '@/lib/monitoring/heartbeat';
 import { calculateReadiness } from '@/lib/health/readiness';
+import {
+  classifyBiomarkers,
+  sendBiomarkerAlerts,
+} from '@/lib/health/biomarker-classifier';
 
 export const maxDuration = 300;
 
@@ -72,10 +76,40 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Biomarker classification and alerts
+    let biomarkerAlerts = 0;
+    const { data: recentExamUsers } = await supabase
+      .from('biomarkers')
+      .select('user_id')
+      .eq('alert_sent', false)
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    const uniqueUserIds = [
+      ...new Set(
+        ((recentExamUsers || []) as Record<string, unknown>[]).map((r) =>
+          String(r.user_id),
+        ),
+      ),
+    ];
+
+    for (const uid of uniqueUserIds) {
+      try {
+        const { alerts } = await classifyBiomarkers(uid);
+        if (alerts.length > 0) {
+          await sendBiomarkerAlerts(uid, alerts);
+          biomarkerAlerts += alerts.length;
+        }
+      } catch {
+        // skip user on error
+      }
+    }
+
     return NextResponse.json({
       inactive_users: inactive?.length || 0,
       pushed,
       overtraining_alerts: overtrained,
+      biomarker_alerts: biomarkerAlerts,
     });
   });
 }
