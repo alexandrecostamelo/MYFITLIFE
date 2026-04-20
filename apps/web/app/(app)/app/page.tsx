@@ -56,7 +56,7 @@ export default async function DashboardPage() {
       .gte('created_at', todayStr),
     supabase
       .from('daily_plans')
-      .select('id, workout_suggestion')
+      .select('id, workout_suggestion, program_name')
       .eq('user_id', user.id)
       .eq('date', todayStr)
       .maybeSingle(),
@@ -131,7 +131,7 @@ export default async function DashboardPage() {
       heatmap={heatmapData}
       todo={todo}
       currentWeight={weightRec?.weight_kg ? Number(weightRec.weight_kg) : undefined}
-      workoutTitle={planRec?.workout_suggestion ? 'Treino do dia pronto' : undefined}
+      workoutTitle={planRec?.workout_suggestion ? String(planRec.program_name || 'Treino do dia pronto') : undefined}
       coachPersona={String(profileRec?.coach_persona || 'leo')}
     />
   );

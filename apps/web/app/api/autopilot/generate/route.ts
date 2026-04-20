@@ -111,6 +111,7 @@ export async function POST(req: NextRequest) {
 
     const plan = JSON.parse(jsonMatch[0]);
 
+    const userName = profile?.full_name?.split(' ')[0] || 'Treineiro';
     const { data: saved, error } = await supabase
       .from('daily_plans')
       .insert({
@@ -120,7 +121,8 @@ export async function POST(req: NextRequest) {
         water_goal_ml: plan.water_goal_ml,
         habits: { workout: plan.workout, active_gym: activeGym?.name || null },
         ai_notes: plan.coach_message,
-      })
+        program_name: `Plano do ${userName}`,
+      } as Record<string, unknown>)
       .select()
       .single();
 
