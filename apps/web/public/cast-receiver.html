@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MyFitLife TV</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0A0A0A;
+      color: #FAFAFA;
+      font-family: Inter, system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .idle { text-align: center; }
+    .idle h1 { font-size: 64px; font-weight: 700; color: #00D9A3; }
+    .idle p { font-size: 24px; color: #A0A0A0; margin-top: 16px; }
+    .exercise { display: flex; width: 100vw; height: 100vh; padding: 48px; }
+    .exercise .left {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .exercise .left img {
+      width: 400px;
+      height: 400px;
+      border-radius: 24px;
+      object-fit: cover;
+    }
+    .exercise .placeholder {
+      width: 400px;
+      height: 400px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 120px;
+    }
+    .exercise .right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 24px;
+    }
+    .workout-label {
+      font-size: 16px;
+      color: #00D9A3;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+    .name { font-size: 72px; font-weight: 700; line-height: 1.1; }
+    .stats-row { display: flex; gap: 48px; }
+    .stats {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 80px;
+      font-weight: 300;
+    }
+    .stats span { font-size: 36px; color: #A0A0A0; }
+    .set-info { font-size: 28px; color: #00D9A3; }
+    .next-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 500px;
+    }
+    .next-card .label {
+      font-size: 12px;
+      color: #A0A0A0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .next-card .next-name { font-size: 24px; margin-top: 4px; }
+    .rest {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+    .rest h2 {
+      font-size: 36px;
+      color: #A0A0A0;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+    }
+    .rest .timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 160px;
+      font-weight: 300;
+      color: #00D9A3;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="idle">
+      <h1>MyFitLife</h1>
+      <p>Aguardando treino do celular...</p>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  <script>
+    /* global cast */
+    var state = { exercises: [], index: 0, set: 1, name: '', restTimer: null };
+
+    function renderIdle(msg) {
+      document.getElementById('root').innerHTML =
+        '<div class="idle"><h1>' + (msg || 'MyFitLife') + '</h1>' +
+        '<p>Aguardando treino do celular...</p></div>';
+    }
+
+    function renderExercise() {
+      var ex = state.exercises[state.index];
+      if (!ex) {
+        document.getElementById('root').innerHTML =
+          '<div class="idle"><h1>Treino Conclu\u00eddo!</h1><p>\uD83C\uDF89 Bom trabalho!</p></div>';
+        return;
+      }
+      var next = state.exercises[state.index + 1];
+      var thumb = ex.thumbnail_url
+        ? '<img src="' + ex.thumbnail_url + '" alt="">'
+        : '<div class="placeholder">\uD83D\uDCAA</div>';
+
+      var nextHtml = next
+        ? '<div class="next-card"><div class="label">Pr\u00f3ximo</div>' +
+          '<div class="next-name">' + next.name + '</div></div>'
+        : '';
+
+      document.getElementById('root').innerHTML =
+        '<div class="exercise">' +
+          '<div class="left">' + thumb + '</div>' +
+          '<div class="right">' +
+            '<div class="workout-label">' + state.name + '</div>' +
+            '<div class="name">' + ex.name + '</div>' +
+            '<div class="stats-row">' +
+              '<div class="stats">' + (ex.sets || 3) + '<span> sets</span></div>' +
+              '<div class="stats">' + (ex.reps || 10) + '<span> reps</span></div>' +
+            '</div>' +
+            '<div class="set-info">S\u00e9rie ' + state.set + '/' + (ex.sets || 3) +
+              ' \u00b7 Exerc\u00edcio ' + (state.index + 1) + '/' + state.exercises.length + '</div>' +
+            nextHtml +
+          '</div>' +
+        '</div>';
+    }
+
+    function renderRest(seconds) {
+      var remaining = seconds;
+      document.getElementById('root').innerHTML =
+        '<div class="rest"><h2>Descanso</h2><div class="timer" id="rest-timer">' +
+        remaining + '</div></div>';
+
+      if (state.restTimer) clearInterval(state.restTimer);
+      state.restTimer = setInterval(function() {
+        remaining--;
+        var el = document.getElementById('rest-timer');
+        if (el) el.textContent = String(remaining);
+        if (remaining <= 0) {
+          clearInterval(state.restTimer);
+          state.restTimer = null;
+          var ex = state.exercises[state.index];
+          if (state.set < (ex ? ex.sets || 3 : 3)) {
+            state.set++;
+          } else if (state.index < state.exercises.length - 1) {
+            state.index++;
+            state.set = 1;
+          }
+          renderExercise();
+        }
+      }, 1000);
+    }
+
+    try {
+      var context = cast.framework.CastReceiverContext.getInstance();
+      context.addCustomMessageListener('urn:x-cast:app.myfitlife', function(event) {
+        var data = event.data;
+        if (data.type === 'START_TV_WORKOUT') {
+          state.exercises = data.exercises || [];
+          state.name = data.workoutName || 'Treino';
+          state.index = 0;
+          state.set = 1;
+          renderExercise();
+        }
+        if (data.type === 'NEXT_SET') {
+          var ex = state.exercises[state.index];
+          if (state.set < (ex ? ex.sets || 3 : 3)) {
+            state.set++;
+          } else if (state.index < state.exercises.length - 1) {
+            state.index++;
+            state.set = 1;
+          }
+          renderExercise();
+        }
+        if (data.type === 'START_REST') {
+          renderRest(data.duration || 60);
+        }
+      });
+      context.start();
+    } catch (e) {
+      // Not running in Cast context — show idle screen
+      renderIdle('MyFitLife');
+    }
+  </script>
+</body>
+</html>
