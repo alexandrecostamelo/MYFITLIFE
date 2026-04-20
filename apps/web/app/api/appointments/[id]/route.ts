@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { requestNfseIssuance } from '@/lib/nfse/issue';
+import { refundSession, type Specialty } from '@/lib/premium/quota';
 
 const patchSchema = z.object({
   action: z.enum(['confirm', 'cancel', 'complete', 'no_show', 'update_notes', 'update_meeting_url']),
@@ -55,6 +56,21 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     updates.cancelled_by = user.id;
     updates.cancelled_at = new Date().toISOString();
     updates.cancel_reason = parsed.data.cancel_reason;
+
+    // Refund premium quota if applicable
+    if (appt.is_premium_included && appt.premium_quota_id) {
+      const { data: assignment } = await supabase
+        .from('premium_assignments')
+        .select('specialty')
+        .eq('user_id', appt.client_id)
+        .eq('professional_id', (appt.professionals as any)?.user_id)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (assignment) {
+        const spec = (assignment as Record<string, unknown>).specialty as Specialty;
+        await refundSession(appt.client_id, spec);
+      }
+    }
   } else if (parsed.data.action === 'complete') {
     if (!isProfessional) return NextResponse.json({ error: 'only_professional' }, { status: 403 });
     updates.status = 'completed';

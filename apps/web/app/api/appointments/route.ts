@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { isPremium, canUseSession, consumeSession, type Specialty } from '@/lib/premium/quota';
 
 const schema = z.object({
   professional_id: z.string().uuid(),
@@ -89,9 +90,33 @@ export async function POST(req: NextRequest) {
 
   const { data: prof } = await supabase
     .from('professionals')
-    .select('price_consultation, modalities')
+    .select('price_consultation, modalities, user_id')
     .eq('id', parsed.data.professional_id)
     .single();
+
+  // Check Premium quota for assigned professionals
+  const userIsPremium = await isPremium(user.id);
+  let premiumIncluded = false;
+  let premiumSpecialty: Specialty | null = null;
+
+  if (userIsPremium && prof?.user_id) {
+    const { data: assignment } = await supabase
+      .from('premium_assignments')
+      .select('specialty')
+      .eq('user_id', user.id)
+      .eq('professional_id', prof.user_id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (assignment) {
+      const spec = (assignment as Record<string, unknown>).specialty as Specialty;
+      const quotaCheck = await canUseSession(user.id, spec);
+      if (quotaCheck.allowed) {
+        premiumIncluded = true;
+        premiumSpecialty = spec;
+      }
+    }
+  }
 
   const { data: created, error } = await supabase
     .from('appointments')
@@ -102,13 +127,20 @@ export async function POST(req: NextRequest) {
       duration_min: parsed.data.duration_min,
       modality: parsed.data.modality,
       client_notes: parsed.data.client_notes,
-      price: prof?.price_consultation,
+      price: premiumIncluded ? 0 : prof?.price_consultation,
       share_history: parsed.data.share_history,
       status: 'requested',
+      is_premium_included: premiumIncluded,
     })
     .select('id')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ id: created.id });
+
+  // Consume premium quota after successful creation
+  if (premiumIncluded && premiumSpecialty && created) {
+    await consumeSession(user.id, premiumSpecialty, created.id);
+  }
+
+  return NextResponse.json({ id: created.id, premium_included: premiumIncluded });
 }
