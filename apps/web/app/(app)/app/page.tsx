@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { DashboardClient } from './dashboard-client';
 import { calculateSleepScore } from '@/lib/health/sleep-score';
+import { WidgetSync } from '@/components/widgets/widget-sync';
 
 export const dynamic = 'force-dynamic';
 
@@ -236,6 +237,24 @@ export default async function DashboardPage() {
   );
 
   return (
+    <>
+    <WidgetSync data={{
+      streak,
+      todayWorkout: planRec?.workout_suggestion
+        ? String(planRec.program_name || 'Treino do dia pronto')
+        : null,
+      todayWorkoutDone: todo.workoutDone,
+      todayMinutes,
+      nextMeal: null,
+      nextMealTime: null,
+      mealsLogged: mealsCount,
+      mealsTarget: 4,
+      checkinDone: todo.checkinDone,
+      readinessScore: readinessRec ? Number(readinessRec.score) : null,
+      readinessZone: readinessRec ? String(readinessRec.zone) : null,
+      sleepScore: sleepScore?.total ?? null,
+      updatedAt: new Date().toISOString(),
+    }} />
     <DashboardClient
       name={String(profileRec?.full_name || 'Treineiro').split(' ')[0]}
       avatar={
@@ -277,5 +296,6 @@ export default async function DashboardPage() {
       }
       heroMetrics={heroMetrics}
     />
+    </>
   );
 }
