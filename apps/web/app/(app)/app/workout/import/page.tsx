@@ -9,7 +9,7 @@ export default async function ImportWorkoutsPage() {
 
   const { data: exercises } = await supabase
     .from('exercises')
-    .select('id, name_pt, slug')
+    .select('id, name_pt, slug, aliases')
     .order('name_pt')
     .limit(500);
 

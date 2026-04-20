@@ -2,6 +2,7 @@ interface ExerciseRow {
   id: string;
   name_pt: string;
   slug: string;
+  aliases?: string[] | null;
 }
 
 function stripDiacritics(s: string): string {
@@ -49,7 +50,7 @@ export function matchExercise(
   let best = { id: '', name: '', score: 0 };
 
   for (const ex of catalog) {
-    const candidates = [ex.name_pt, ex.slug.replace(/-/g, ' ')];
+    const candidates = [ex.name_pt, ex.slug.replace(/-/g, ' '), ...(ex.aliases || [])];
     for (const cand of candidates) {
       const candNorm = normalize(cand);
 
