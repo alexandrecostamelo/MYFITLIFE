@@ -7,3 +7,4 @@ export { RecipeCard } from './recipe-card';
 export { EditableWorkoutChips } from './editable-workout-chips';
 export { CoachAvatar } from './coach-avatar';
 export { ProgressChart } from './progress-chart';
+export { CircularTimer } from './circular-timer';
