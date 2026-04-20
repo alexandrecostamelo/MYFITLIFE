@@ -1,7 +1,8 @@
 # Native Code — MyFitLife
 
-Este diretório contém código nativo (widgets + shortcuts) que deve ser
-copiado para os projetos iOS/Android após `npx cap add ios` / `npx cap add android`.
+Este diretório contém código nativo (widgets, shortcuts, Apple Watch)
+que deve ser copiado para os projetos iOS/Android após
+`npx cap add ios` / `npx cap add android`.
 
 ## iOS
 
@@ -50,6 +51,38 @@ func application(_ application: UIApplication, continue userActivity: NSUserActi
     return true
 }
 ```
+
+### 8. Copiar WatchSessionManager
+Copie `ios/WatchSessionManager/WatchSessionManager.swift` para `ios/App/App/`.
+
+No `AppDelegate.swift`, em `didFinishLaunchingWithOptions`:
+```swift
+WatchSessionManager.shared.activate()
+```
+
+No `WidgetBridgePlugin.swift`, após `defaults?.synchronize()` no `saveWidgetData`:
+```swift
+WatchSessionManager.shared.sendDataToWatch()
+```
+
+### 9. Criar Watch App + Complications
+No Xcode: File → New → Target → watchOS → Watch App → "MyFitLife Watch".
+- Include Complication: YES
+- App Group: `group.app.myfitlife.shared`
+
+Copie os arquivos de `ios/MyFitLifeWatch/` para o target Watch:
+- `SharedData.swift` — modelo de dados compartilhado
+- `Complications.swift` — 3 complicações (Streak, Readiness, Treino do Dia)
+- `WatchConnectivityReceiver.swift` — recebe dados do iPhone
+- `MyFitLifeWatchApp.swift` — entry point do Watch app
+
+**Importante:** O `Complications.swift` tem `@main` via `WidgetBundle`.
+O `MyFitLifeWatchApp.swift` também tem `@main`. Escolha apenas um
+como entry point e remova `@main` do outro, ou use targets separados
+(Watch App vs Watch Widget Extension).
+
+App Group `group.app.myfitlife.shared` deve estar nos 3 targets:
+App, MyFitLifeWidget, MyFitLife Watch.
 
 ## Android
 
