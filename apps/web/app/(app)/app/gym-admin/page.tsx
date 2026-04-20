@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building2, BarChart2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, BarChart2, Loader2, CalendarDays } from 'lucide-react';
 
 export default function GymAdminIndexPage() {
   const [gyms, setGyms] = useState<any[]>([]);
@@ -58,11 +58,18 @@ export default function GymAdminIndexPage() {
                     <div className="text-xs text-muted-foreground">{[g.gym_place.city, g.gym_place.state].filter(Boolean).join(', ')}</div>
                   )}
                 </div>
-                <Button asChild size="sm">
-                  <Link href={`/app/gym-admin/${g.gym_place_id}`}>
-                    <BarChart2 className="mr-1 h-4 w-4" /> Analytics
-                  </Link>
-                </Button>
+                <div className="flex gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/app/gym-admin/classes">
+                      <CalendarDays className="mr-1 h-4 w-4" /> Turmas
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm">
+                    <Link href={`/app/gym-admin/${g.gym_place_id}`}>
+                      <BarChart2 className="mr-1 h-4 w-4" /> Analytics
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </Card>
           ))}
