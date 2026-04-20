@@ -1,0 +1,11 @@
+{
+  "name": "@myfitlife/fiscal",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/focusnfe.ts",
+  "types": "./src/focusnfe.ts",
+  "exports": {
+    ".": "./src/focusnfe.ts"
+  },
+  "dependencies": {}
+}

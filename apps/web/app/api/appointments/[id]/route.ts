@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { requestNfseIssuance } from '@/lib/nfse/issue';
 
 const patchSchema = z.object({
   action: z.enum(['confirm', 'cancel', 'complete', 'no_show', 'update_notes', 'update_meeting_url']),
@@ -57,6 +58,10 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   } else if (parsed.data.action === 'complete') {
     if (!isProfessional) return NextResponse.json({ error: 'only_professional' }, { status: 403 });
     updates.status = 'completed';
+    // Trigger NFSe issuance asynchronously
+    requestNfseIssuance(id).catch((err) =>
+      console.error('NFSe trigger failed for appointment', id, err),
+    );
   } else if (parsed.data.action === 'no_show') {
     if (!isProfessional) return NextResponse.json({ error: 'only_professional' }, { status: 403 });
     updates.status = 'no_show';

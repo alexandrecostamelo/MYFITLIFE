@@ -68,6 +68,9 @@ importers:
       '@myfitlife/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@myfitlife/fiscal':
+        specifier: workspace:*
+        version: link:../../packages/fiscal
       '@myfitlife/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -297,6 +300,8 @@ importers:
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
+
+  packages/fiscal: {}
 
   packages/types: {}
 

@@ -2,13 +2,15 @@ export type HeartbeatJob =
   | 'autopilot'
   | 'proactive'
   | 'weekly_summary'
-  | 'daily_cleanup';
+  | 'daily_cleanup'
+  | 'nfse_queue';
 
 const URL_MAP: Record<HeartbeatJob, string | undefined> = {
   autopilot: process.env.HEARTBEAT_AUTOPILOT_URL,
   proactive: process.env.HEARTBEAT_PROACTIVE_URL,
   weekly_summary: process.env.HEARTBEAT_WEEKLY_SUMMARY_URL,
   daily_cleanup: process.env.HEARTBEAT_DAILY_CLEANUP_URL,
+  nfse_queue: process.env.HEARTBEAT_NFSE_QUEUE_URL,
 };
 
 export async function sendHeartbeat(
