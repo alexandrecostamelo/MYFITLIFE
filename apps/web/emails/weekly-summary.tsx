@@ -5,6 +5,7 @@ import {
   EmailButton,
   EmailMetric,
   EmailCard,
+  BRAND,
 } from './components/layout';
 import { Section, Column, Row } from '@react-email/components';
 
@@ -59,7 +60,7 @@ export function WeeklySummaryEmail({
           </EmailText>
         )}
       </EmailCard>
-      <EmailButton href="https://myfitlife.app/app/dashboard">
+      <EmailButton href={`${BRAND.url}/app/dashboard`}>
         Ver detalhes
       </EmailButton>
     </EmailLayout>

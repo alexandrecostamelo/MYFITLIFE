@@ -4,6 +4,7 @@ import {
   EmailText,
   EmailButton,
   EmailMetric,
+  BRAND,
 } from './components/layout';
 
 interface Props {
@@ -35,7 +36,7 @@ export function WorkoutStreakEmail({
           ? `Incr\u00edvel, ${firstName}! Voc\u00ea atingiu ${streak} dias consecutivos. Poucos chegam aqui.`
           : `Boa, ${firstName}! ${streak} dias sem parar. Continue assim!`}
       </EmailText>
-      <EmailButton href="https://myfitlife.app/app/dashboard">
+      <EmailButton href={`${BRAND.url}/app/dashboard`}>
         Manter o streak
       </EmailButton>
     </EmailLayout>

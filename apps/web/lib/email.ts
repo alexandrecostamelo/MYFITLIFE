@@ -4,7 +4,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 type Client = SupabaseClient<any, any, any>;
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM = process.env.RESEND_FROM || 'MyFitLife <onboarding@resend.dev>';
+const FROM = process.env.RESEND_FROM || 'MyFitLife <noreply@myfitlife.app>';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://myfitlife.app';
 
 type EmailPayload = {
   to: string;
@@ -89,9 +90,9 @@ export function welcomeEmailHtml(firstName: string): string {
     <li>Converse com o coach IA</li>
   </ul>
   <p style="margin-top:24px;">
-    <a href="https://myfitlife.app/app" style="background:#1f4e79;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;">Abrir o app</a>
+    <a href="${BASE_URL}/app" style="background:#1f4e79;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;">Abrir o app</a>
   </p>
-  <p style="margin-top:32px;color:#888;font-size:12px;">Não quer mais receber emails? <a href="https://myfitlife.app/app/settings/notifications" style="color:#888;">Ajuste suas preferências</a>.</p>
+  <p style="margin-top:32px;color:#888;font-size:12px;">Não quer mais receber emails? <a href="${BASE_URL}/app/settings/notifications" style="color:#888;">Ajuste suas preferências</a>.</p>
 </body></html>`.trim();
 }
 
@@ -112,9 +113,9 @@ export function weeklySummaryEmailHtml(firstName: string, summary: any): string 
     </tr>
   </table>
   <p style="margin-top:24px;">
-    <a href="https://myfitlife.app/app/reports/weekly" style="background:#1f4e79;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;">Ver relatório completo</a>
+    <a href="${BASE_URL}/app/reports/weekly" style="background:#1f4e79;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;">Ver relatório completo</a>
   </p>
-  <p style="margin-top:32px;color:#888;font-size:12px;"><a href="https://myfitlife.app/app/settings/notifications" style="color:#888;">Gerenciar notificações</a></p>
+  <p style="margin-top:32px;color:#888;font-size:12px;"><a href="${BASE_URL}/app/settings/notifications" style="color:#888;">Gerenciar notificações</a></p>
 </body></html>`.trim();
 }
 
@@ -125,8 +126,8 @@ export function churnRecoveryEmailHtml(firstName: string, daysAway: number): str
   <h1 style="color:#1f4e79;margin:0 0 16px;">Sentimos sua falta, ${firstName}</h1>
   <p style="line-height:1.6;">Faz ${daysAway} dias que você não aparece por aqui. Tudo bem? Pequenos passos diários fazem grande diferença — que tal começar devagar hoje?</p>
   <p style="margin-top:24px;">
-    <a href="https://myfitlife.app/app" style="background:#1f4e79;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;">Voltar pro MyFitLife</a>
+    <a href="${BASE_URL}/app" style="background:#1f4e79;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;">Voltar pro MyFitLife</a>
   </p>
-  <p style="margin-top:32px;color:#888;font-size:12px;">Prefere não receber mais estes emails? <a href="https://myfitlife.app/app/settings/notifications" style="color:#888;">Cancelar aqui</a>.</p>
+  <p style="margin-top:32px;color:#888;font-size:12px;">Prefere não receber mais estes emails? <a href="${BASE_URL}/app/settings/notifications" style="color:#888;">Cancelar aqui</a>.</p>
 </body></html>`.trim();
 }

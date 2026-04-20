@@ -16,7 +16,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-const BRAND = {
+export const BRAND = {
   color: '#00D9A3',
   bg: '#0A0A0A',
   surface: '#141414',

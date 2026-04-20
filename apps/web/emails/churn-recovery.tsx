@@ -3,6 +3,7 @@ import {
   EmailHeading,
   EmailText,
   EmailButton,
+  BRAND,
 } from './components/layout';
 
 interface Props {
@@ -32,7 +33,7 @@ export function ChurnRecoveryEmail({
         Seu coach preparou um plano especial pra voc\u00ea voltar sem
         press\u00e3o. 5 minutos \u00e9 suficiente pra manter o h\u00e1bito.
       </EmailText>
-      <EmailButton href="https://myfitlife.app/app/workouts/explore">
+      <EmailButton href={`${BRAND.url}/app/workouts/explore`}>
         Treino r\u00e1pido de 5 min
       </EmailButton>
       <EmailText muted>

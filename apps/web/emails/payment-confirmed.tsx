@@ -4,6 +4,7 @@ import {
   EmailText,
   EmailButton,
   EmailCard,
+  BRAND,
 } from './components/layout';
 
 interface Props {
@@ -35,7 +36,7 @@ export function PaymentConfirmedEmail({
           Pr\u00f3xima cobran\u00e7a: {nextBilling}
         </EmailText>
       </EmailCard>
-      <EmailButton href="https://myfitlife.app/app/billing">
+      <EmailButton href={`${BRAND.url}/app/billing`}>
         Ver assinatura
       </EmailButton>
     </EmailLayout>

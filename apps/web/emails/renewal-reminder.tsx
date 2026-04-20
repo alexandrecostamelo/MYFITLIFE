@@ -4,6 +4,7 @@ import {
   EmailText,
   EmailButton,
   EmailCard,
+  BRAND,
 } from './components/layout';
 
 interface Props {
@@ -42,7 +43,7 @@ export function RenewalReminderEmail({
           <EmailText>{qrCode.slice(0, 80)}...</EmailText>
         </EmailCard>
       )}
-      <EmailButton href="https://myfitlife.app/app/billing">
+      <EmailButton href={`${BRAND.url}/app/billing`}>
         Renovar agora
       </EmailButton>
       <EmailText muted>

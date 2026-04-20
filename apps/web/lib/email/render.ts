@@ -70,7 +70,7 @@ export async function sendEmail(opts: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'MyFitLife <noreply@myfitlife.app>',
+      from: process.env.RESEND_FROM || 'MyFitLife <noreply@myfitlife.app>',
       to,
       subject: overrideSubject || subject,
       html,

@@ -4,6 +4,7 @@ import {
   EmailText,
   EmailButton,
   EmailCard,
+  BRAND,
 } from './components/layout';
 
 interface Props {
@@ -40,7 +41,7 @@ export function WinBackEmail({
         </EmailText>
       </EmailCard>
       <EmailButton
-        href={`https://myfitlife.app/app/plans?winback=${attemptId}`}
+        href={`${BRAND.url}/app/plans?winback=${attemptId}`}
       >
         Voltar com desconto
       </EmailButton>

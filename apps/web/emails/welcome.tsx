@@ -3,6 +3,7 @@ import {
   EmailHeading,
   EmailText,
   EmailButton,
+  BRAND,
 } from './components/layout';
 
 interface Props {
@@ -29,7 +30,7 @@ export function WelcomeEmail({ name, trialDays = 7 }: Props) {
         {'\n'}
         4. Converse com seu coach (Leo, Sofia ou Rafa)
       </EmailText>
-      <EmailButton href="https://myfitlife.app/app/dashboard">
+      <EmailButton href={`${BRAND.url}/app/dashboard`}>
         Abrir MyFitLife
       </EmailButton>
       <EmailText muted>
