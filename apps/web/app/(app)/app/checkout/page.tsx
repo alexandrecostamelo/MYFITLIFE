@@ -1,20 +1,24 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Loader2, CreditCard, Smartphone, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Smartphone, CheckCircle2, FileText } from 'lucide-react';
+
+type Method = 'stripe' | 'pix' | 'card_br' | 'boleto';
 
 function CheckoutContent() {
   const params = useSearchParams();
+  const router = useRouter();
   const cycle = (params.get('cycle') || 'monthly') as 'monthly' | 'yearly';
 
-  const [method, setMethod] = useState<'stripe' | 'pix'>('stripe');
+  const [method, setMethod] = useState<Method>('stripe');
   const [document, setDocument] = useState('');
+  const [documentType, setDocumentType] = useState<'CPF' | 'CNPJ'>('CPF');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pixData, setPixData] = useState<{
@@ -24,6 +28,22 @@ function CheckoutContent() {
     expires_at: string;
     order_id: string;
   } | null>(null);
+
+  // Card BR fields
+  const [cardForm, setCardForm] = useState({
+    name: '',
+    card_number: '',
+    card_holder: '',
+    card_exp_month: '',
+    card_exp_year: '',
+    card_cvv: '',
+    address_zip: '',
+    address_street: '',
+    address_number: '',
+    address_city: '',
+    address_state: '',
+  });
+  const upCard = (k: string, v: string) => setCardForm((f) => ({ ...f, [k]: v }));
 
   const PRICE_MONTHLY = 2990;
   const PRICE_YEARLY  = 24990;
@@ -67,6 +87,79 @@ function CheckoutContent() {
     }
     setPixData(data);
     setLoading(false);
+  }
+
+  async function payWithPagarMeRecurring(payMethod: 'credit_card' | 'boleto') {
+    const doc = document.replace(/\D/g, '');
+    if (!doc) { setError('Informe o CPF/CNPJ'); return; }
+    const name = payMethod === 'credit_card' ? cardForm.name : cardForm.name;
+    if (!name) { setError('Informe seu nome completo'); return; }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      let cardToken: string | undefined;
+      if (payMethod === 'credit_card') {
+        // Tokenize card via PagarMe API
+        const pubKey = process.env.NEXT_PUBLIC_PAGARME_PUBLIC_KEY;
+        if (!pubKey) { setError('Chave PagarMe não configurada'); setLoading(false); return; }
+
+        const tokenRes = await fetch(`https://api.pagar.me/core/v5/tokens?appId=${pubKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'card',
+            card: {
+              number: cardForm.card_number.replace(/\s/g, ''),
+              holder_name: cardForm.card_holder || name,
+              exp_month: parseInt(cardForm.card_exp_month),
+              exp_year: parseInt(cardForm.card_exp_year),
+              cvv: cardForm.card_cvv,
+            },
+          }),
+        });
+        if (!tokenRes.ok) {
+          const err = await tokenRes.json().catch(() => ({}));
+          setError(err.message || 'Erro ao validar cartão');
+          setLoading(false);
+          return;
+        }
+        const tokenData = await tokenRes.json();
+        cardToken = tokenData.id;
+      }
+
+      const plan = cycle === 'yearly' ? 'pro_yearly' : 'pro_monthly';
+      const res = await fetch('/api/billing/pagarme/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan,
+          method: payMethod,
+          card_token: cardToken,
+          customer: { name, document: doc, document_type: documentType },
+          billing_address: cardForm.address_zip
+            ? {
+                line_1: `${cardForm.address_number}, ${cardForm.address_street}`,
+                zip_code: cardForm.address_zip.replace(/\D/g, ''),
+                city: cardForm.address_city,
+                state: cardForm.address_state,
+                country: 'BR',
+              }
+            : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Falha ao criar assinatura');
+        setLoading(false);
+        return;
+      }
+      router.push('/app/billing?success=1');
+    } catch (err: any) {
+      setError(err.message || 'Erro inesperado');
+      setLoading(false);
+    }
   }
 
   if (pixData) {
@@ -119,8 +212,12 @@ function CheckoutContent() {
   const sel   = 'border-primary bg-primary/10 text-primary';
   const unsel = 'border-input hover:bg-muted';
 
+  const needsDocument = method === 'pix' || method === 'card_br' || method === 'boleto';
+  const needsCardFields = method === 'card_br';
+  const needsAddress = method === 'card_br' || method === 'boleto';
+
   return (
-    <main className="mx-auto max-w-md p-4">
+    <main className="mx-auto max-w-md p-4 pb-24">
       <header className="mb-4 flex items-center gap-2">
         <Link href="/app/plans" className="rounded p-2 hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />
@@ -150,8 +247,16 @@ function CheckoutContent() {
             className={`flex flex-col items-center gap-1 rounded-lg border p-3 text-sm transition-colors ${method === 'stripe' ? sel : unsel}`}
           >
             <CreditCard className="h-5 w-5" />
-            <span className="text-xs font-medium">Cartão</span>
-            <span className="text-xs text-muted-foreground">Stripe · Apple/Google Pay</span>
+            <span className="text-xs font-medium">Cartão Int.</span>
+            <span className="text-xs text-muted-foreground">Stripe · Apple Pay</span>
+          </button>
+          <button
+            onClick={() => setMethod('card_br')}
+            className={`flex flex-col items-center gap-1 rounded-lg border p-3 text-sm transition-colors ${method === 'card_br' ? sel : unsel}`}
+          >
+            <CreditCard className="h-5 w-5" />
+            <span className="text-xs font-medium">Cartão BR</span>
+            <span className="text-xs text-muted-foreground">Recorrente · PagarMe</span>
           </button>
           <button
             onClick={() => setMethod('pix')}
@@ -159,9 +264,116 @@ function CheckoutContent() {
           >
             <Smartphone className="h-5 w-5" />
             <span className="text-xs font-medium">Pix</span>
-            <span className="text-xs text-muted-foreground">PagarMe · instantâneo</span>
+            <span className="text-xs text-muted-foreground">Avulso · instantâneo</span>
+          </button>
+          <button
+            onClick={() => setMethod('boleto')}
+            className={`flex flex-col items-center gap-1 rounded-lg border p-3 text-sm transition-colors ${method === 'boleto' ? sel : unsel}`}
+          >
+            <FileText className="h-5 w-5" />
+            <span className="text-xs font-medium">Boleto</span>
+            <span className="text-xs text-muted-foreground">Recorrente · mensal</span>
           </button>
         </div>
+
+        {/* Document + Name for BR methods */}
+        {needsDocument && (
+          <div className="mb-4 space-y-3 rounded-lg border bg-muted/30 p-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Nome completo</Label>
+              <Input
+                value={cardForm.name}
+                onChange={(e) => upCard('name', e.target.value)}
+                placeholder="Como consta no documento"
+              />
+            </div>
+            <div className="flex gap-2">
+              <select
+                value={documentType}
+                onChange={(e) => setDocumentType(e.target.value as 'CPF' | 'CNPJ')}
+                className="rounded-md border px-2 text-sm bg-background"
+              >
+                <option value="CPF">CPF</option>
+                <option value="CNPJ">CNPJ</option>
+              </select>
+              <div className="flex-1 space-y-1">
+                <Input
+                  value={document}
+                  onChange={(e) => setDocument(e.target.value.replace(/\D/g, ''))}
+                  placeholder={documentType === 'CPF' ? '00000000000' : '00000000000000'}
+                  maxLength={documentType === 'CPF' ? 11 : 14}
+                  inputMode="numeric"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Card fields for card_br */}
+        {needsCardFields && (
+          <div className="mb-4 space-y-3 rounded-lg border bg-muted/30 p-3">
+            <p className="text-xs font-medium">Dados do cartão</p>
+            <div className="space-y-1">
+              <Label className="text-xs">Número do cartão</Label>
+              <Input
+                value={cardForm.card_number}
+                onChange={(e) => upCard('card_number', e.target.value)}
+                placeholder="0000 0000 0000 0000"
+                inputMode="numeric"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Nome impresso no cartão</Label>
+              <Input
+                value={cardForm.card_holder}
+                onChange={(e) => upCard('card_holder', e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Mês</Label>
+                <Input value={cardForm.card_exp_month} onChange={(e) => upCard('card_exp_month', e.target.value)} placeholder="12" inputMode="numeric" maxLength={2} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Ano</Label>
+                <Input value={cardForm.card_exp_year} onChange={(e) => upCard('card_exp_year', e.target.value)} placeholder="2030" inputMode="numeric" maxLength={4} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">CVV</Label>
+                <Input value={cardForm.card_cvv} onChange={(e) => upCard('card_cvv', e.target.value)} placeholder="000" inputMode="numeric" maxLength={4} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Address for card_br / boleto */}
+        {needsAddress && (
+          <div className="mb-4 space-y-3 rounded-lg border bg-muted/30 p-3">
+            <p className="text-xs font-medium">Endereço de cobrança</p>
+            <div className="space-y-1">
+              <Label className="text-xs">CEP</Label>
+              <Input value={cardForm.address_zip} onChange={(e) => upCard('address_zip', e.target.value)} placeholder="00000-000" inputMode="numeric" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Rua</Label>
+              <Input value={cardForm.address_street} onChange={(e) => upCard('address_street', e.target.value)} />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Nº</Label>
+                <Input value={cardForm.address_number} onChange={(e) => upCard('address_number', e.target.value)} />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <Label className="text-xs">Cidade</Label>
+                <Input value={cardForm.address_city} onChange={(e) => upCard('address_city', e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">UF</Label>
+              <Input value={cardForm.address_state} onChange={(e) => upCard('address_state', e.target.value.toUpperCase().slice(0, 2))} placeholder="SP" maxLength={2} />
+            </div>
+          </div>
+        )}
 
         {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
 
@@ -172,29 +384,43 @@ function CheckoutContent() {
         )}
 
         {method === 'pix' && (
-          <div className="space-y-2">
-            <Label className="text-xs">CPF <span className="text-muted-foreground">(somente números)</span></Label>
-            <Input
-              value={document}
-              onChange={(e) => setDocument(e.target.value.replace(/\D/g, ''))}
-              placeholder="00000000000"
-              maxLength={11}
-              inputMode="numeric"
-            />
-            <Button
-              onClick={payWithPix}
-              disabled={loading || document.length !== 11}
-              className="w-full"
-              size="lg"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : `Gerar Pix · ${fmt(price)}`}
-            </Button>
-          </div>
+          <Button
+            onClick={payWithPix}
+            disabled={loading || document.length < 11}
+            className="w-full"
+            size="lg"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : `Gerar Pix · ${fmt(price)}`}
+          </Button>
+        )}
+
+        {method === 'card_br' && (
+          <Button
+            onClick={() => payWithPagarMeRecurring('credit_card')}
+            disabled={loading}
+            className="w-full"
+            size="lg"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : `Assinar com cartão · ${fmt(price)}`}
+          </Button>
+        )}
+
+        {method === 'boleto' && (
+          <Button
+            onClick={() => payWithPagarMeRecurring('boleto')}
+            disabled={loading}
+            className="w-full"
+            size="lg"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : `Assinar com boleto · ${fmt(price)}`}
+          </Button>
         )}
       </Card>
 
       <p className="text-center text-xs text-muted-foreground">
         Pagamento seguro · Cancele quando quiser
+        {method === 'boleto' && ' · Primeiro boleto em até 5 dias'}
+        {(method === 'card_br' || method === 'boleto') && ' · Cobrança recorrente automática'}
       </p>
     </main>
   );

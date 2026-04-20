@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, CheckCircle2, Star, Receipt } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle2, Star, Receipt, FileText } from 'lucide-react';
 
 const STATUS_LABEL: Record<string, string> = {
   active: 'Ativa',
@@ -26,11 +26,13 @@ const STATUS_COLOR: Record<string, string> = {
 function BillingContent() {
   const params = useSearchParams();
   const stripeSuccess = params.get('stripe_success') === '1';
+  const generalSuccess = params.get('success') === '1';
 
   const [sub, setSub] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -62,11 +64,11 @@ function BillingContent() {
         <h1 className="text-2xl font-bold">Assinatura</h1>
       </header>
 
-      {stripeSuccess && (
+      {(stripeSuccess || generalSuccess) && (
         <Card className="mb-4 border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950">
           <p className="text-sm font-medium text-green-800 dark:text-green-200">
             <CheckCircle2 className="mr-2 inline h-4 w-4" />
-            Pagamento confirmado! Seu plano Pro está ativo.
+            Assinatura criada com sucesso! Seu plano Pro está ativo.
           </p>
         </Card>
       )}
@@ -99,6 +101,39 @@ function BillingContent() {
           <Button onClick={openStripePortal} disabled={portalLoading} variant="outline" className="w-full">
             {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Gerenciar cartão e cancelar'}
           </Button>
+        )}
+
+        {isPro && sub?.provider === 'pagarme' && (
+          <div className="space-y-2">
+            {sub.card_last4 && (
+              <p className="text-xs text-muted-foreground">
+                Cartão: •••• {sub.card_last4} {sub.card_brand && `(${sub.card_brand})`}
+              </p>
+            )}
+            {sub.payment_method === 'boleto' && sub.last_invoice_url && (
+              <a href={sub.last_invoice_url} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="w-full gap-1">
+                  <FileText className="h-3 w-3" /> Ver último boleto
+                </Button>
+              </a>
+            )}
+            <Button
+              variant="destructive"
+              className="w-full"
+              disabled={cancelLoading}
+              onClick={async () => {
+                if (!confirm('Tem certeza que deseja cancelar sua assinatura?')) return;
+                setCancelLoading(true);
+                const res = await fetch('/api/billing/pagarme/cancel', { method: 'POST' });
+                if (res.ok) {
+                  setSub((s: any) => ({ ...s, status: 'canceled' }));
+                }
+                setCancelLoading(false);
+              }}
+            >
+              {cancelLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Cancelar assinatura'}
+            </Button>
+          </div>
         )}
 
         {!isPro && (

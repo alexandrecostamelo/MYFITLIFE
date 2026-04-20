@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // ── Pix one-shot orders ──
     if (eventType === 'order.paid' || eventType === 'charge.paid') {
       const data = event.data as Record<string, unknown>;
       const orderId = (data.id ?? data.order_id) as string;
@@ -77,6 +78,143 @@ export async function POST(req: NextRequest) {
       }).eq('provider', 'pagarme').eq('provider_transaction_id', orderId);
     }
 
+    // ── Recurring subscription events ──
+    if (eventType === 'subscription.created' || eventType === 'subscription.updated') {
+      const data = event.data as Record<string, unknown>;
+      const subId = data.id as string;
+      await sb
+        .from('subscriptions')
+        .update({
+          status: mapPagarMeStatus(data.status as string),
+          next_billing_at: (data.next_billing_at as string) || null,
+          updated_at: new Date().toISOString(),
+        } as Record<string, unknown>)
+        .eq('pagarme_subscription_id', subId);
+    }
+
+    if (eventType === 'subscription.canceled') {
+      const data = event.data as Record<string, unknown>;
+      const subId = data.id as string;
+      const { data: localSub } = await sb
+        .from('subscriptions')
+        .select('user_id')
+        .eq('pagarme_subscription_id', subId)
+        .maybeSingle();
+
+      await sb
+        .from('subscriptions')
+        .update({ status: 'canceled', updated_at: new Date().toISOString() } as Record<string, unknown>)
+        .eq('pagarme_subscription_id', subId);
+
+      if (localSub) {
+        const userId = (localSub as Record<string, unknown>).user_id as string;
+        await sb.from('profiles').update({
+          subscription_status: 'canceled',
+        } as Record<string, unknown>).eq('id', userId);
+      }
+    }
+
+    if (eventType === 'invoice.created') {
+      const inv = event.data as Record<string, unknown>;
+      const pmSubId = inv.subscription_id as string;
+      const boleto = inv.boleto as Record<string, unknown> | undefined;
+
+      const { data: localSub } = await sb
+        .from('subscriptions')
+        .select('user_id, id')
+        .eq('pagarme_subscription_id', pmSubId)
+        .maybeSingle();
+
+      if (localSub) {
+        const ls = localSub as Record<string, unknown>;
+        await sb.from('pagarme_invoices').upsert(
+          {
+            user_id: ls.user_id,
+            subscription_id: ls.id,
+            pagarme_invoice_id: inv.id,
+            pagarme_subscription_id: pmSubId,
+            amount_cents: inv.amount as number,
+            status: inv.status as string,
+            payment_method: inv.payment_method as string,
+            due_at: (inv.due_at as string) || null,
+            boleto_url: (boleto?.url as string) || null,
+            boleto_barcode: (boleto?.barcode as string) || null,
+          } as Record<string, unknown>,
+          { onConflict: 'pagarme_invoice_id' },
+        );
+
+        await sb.from('subscriptions').update({
+          last_invoice_id: inv.id as string,
+          last_invoice_status: inv.status as string,
+          last_invoice_url: (boleto?.url as string) || null,
+          updated_at: new Date().toISOString(),
+        } as Record<string, unknown>).eq('pagarme_subscription_id', pmSubId);
+      }
+    }
+
+    if (eventType === 'invoice.paid') {
+      const inv = event.data as Record<string, unknown>;
+      const pmSubId = inv.subscription_id as string;
+
+      const { data: localSub } = await sb
+        .from('subscriptions')
+        .select('user_id, id, plan')
+        .eq('pagarme_subscription_id', pmSubId)
+        .maybeSingle();
+
+      if (localSub) {
+        const ls = localSub as Record<string, unknown>;
+
+        await sb.from('pagarme_invoices').upsert(
+          {
+            user_id: ls.user_id,
+            subscription_id: ls.id,
+            pagarme_invoice_id: inv.id,
+            pagarme_subscription_id: pmSubId,
+            amount_cents: inv.amount as number,
+            status: 'paid',
+            payment_method: inv.payment_method as string,
+            paid_at: (inv.paid_at as string) || new Date().toISOString(),
+            due_at: (inv.due_at as string) || null,
+          } as Record<string, unknown>,
+          { onConflict: 'pagarme_invoice_id' },
+        );
+
+        await sb.from('subscriptions').update({
+          status: 'active',
+          last_invoice_id: inv.id as string,
+          last_invoice_status: 'paid',
+          updated_at: new Date().toISOString(),
+        } as Record<string, unknown>).eq('pagarme_subscription_id', pmSubId);
+
+        await sb.from('profiles').update({
+          subscription_tier: ls.plan as string,
+          subscription_status: 'active',
+        } as Record<string, unknown>).eq('id', ls.user_id as string);
+      }
+    }
+
+    if (eventType === 'invoice.payment_failed') {
+      const inv = event.data as Record<string, unknown>;
+      const pmSubId = inv.subscription_id as string;
+
+      await sb.from('pagarme_invoices').upsert(
+        {
+          pagarme_invoice_id: inv.id,
+          status: 'failed',
+          updated_at: new Date().toISOString(),
+        } as Record<string, unknown>,
+        { onConflict: 'pagarme_invoice_id' },
+      ).select().maybeSingle(); // upsert only if exists
+
+      await sb.from('subscriptions').update({
+        status: 'past_due',
+        last_invoice_id: inv.id as string,
+        last_invoice_status: 'failed',
+        updated_at: new Date().toISOString(),
+      } as Record<string, unknown>).eq('pagarme_subscription_id', pmSubId);
+    }
+
     await sb.from('webhook_events')
       .update({ processed: true, processed_at: new Date().toISOString() })
       .eq('provider', 'pagarme')
@@ -91,4 +229,15 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+function mapPagarMeStatus(pmStatus: string): string {
+  const map: Record<string, string> = {
+    active: 'active',
+    canceled: 'canceled',
+    future: 'pending',
+    ended: 'canceled',
+    trial: 'trialing',
+  };
+  return map[pmStatus] || pmStatus;
 }
