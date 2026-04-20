@@ -6,8 +6,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell, Trophy, Building2, UserX, Zap, Bell, Swords, BarChart3 } from 'lucide-react';
+import { Pencil, Scale, ChevronRight, FileText, Shield, Trash2, Download, Dumbbell, Trophy, Building2, UserX, Zap, Bell, Swords, BarChart3, Volume2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { TtsSettings } from '@/components/tts/TtsSettings';
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -64,6 +65,8 @@ export default function ProfilePage() {
           </div>
         </Card>
       )}
+
+      <TtsSettings />
 
       <Card className="mb-4 divide-y">
         <Link href="/app/stats" className="flex items-center justify-between p-4 hover:bg-slate-50">

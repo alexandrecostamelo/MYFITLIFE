@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Camera, CameraOff, Loader2, Play, Pause, Save } from 'lucide-react';
 import { analyzePose, countRep, type PoseCheckKey } from '@myfitlife/core/pose-rules';
 import { getPoseLandmarker, POSE_CONNECTIONS } from '@/lib/pose-detector';
+import { usePoseVoice } from '@/lib/tts/use-pose-voice';
+import { TtsControls } from '@/components/tts/TtsControls';
 
 type Props = {
   poseCheckKey: PoseCheckKey;
@@ -33,6 +35,7 @@ export function FormAnalyzer({ poseCheckKey, exerciseId, exerciseName, onFinish 
   const [duration, setDuration] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const voice = usePoseVoice();
 
   async function startCamera() {
     setError(null);
@@ -78,6 +81,7 @@ export function FormAnalyzer({ poseCheckKey, exerciseId, exerciseName, onFinish 
     setReps(0);
     setDuration(0);
     setAnalyzing(true);
+    voice.say('set_start');
 
     const loop = () => {
       const video = videoRef.current!;
@@ -107,11 +111,16 @@ export function FormAnalyzer({ poseCheckKey, exerciseId, exerciseName, onFinish 
 
           feedback.cues.forEach((c) => {
             cuesCountRef.current[c] = (cuesCountRef.current[c] || 0) + 1;
+            voice.sayFromCueString(c);
           });
+
+          if (feedback.score >= 85) voice.say('form_excellent');
+          else if (feedback.score < 50) voice.say('form_watch');
 
           if (feedback.phase && countRep(feedback.phase, lastPhaseRef.current)) {
             repsRef.current += 1;
             setReps(repsRef.current);
+            voice.countRepAloud(repsRef.current);
           }
           if (feedback.phase) lastPhaseRef.current = feedback.phase;
         }
@@ -133,6 +142,7 @@ export function FormAnalyzer({ poseCheckKey, exerciseId, exerciseName, onFinish 
 
   async function finishAndSave() {
     pauseAnalysis();
+    voice.say('set_complete');
     setSaving(true);
 
     const scores = scoresRef.current;
@@ -187,6 +197,14 @@ export function FormAnalyzer({ poseCheckKey, exerciseId, exerciseName, onFinish 
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-end">
+        <TtsControls
+          muted={voice.muted}
+          onToggle={voice.toggleMute}
+          supported={voice.supported}
+          onTest={() => voice.say('set_start')}
+        />
+      </div>
       <div className="relative mx-auto aspect-[4/3] w-full overflow-hidden rounded-lg bg-black">
         <video ref={videoRef} playsInline muted className="hidden" />
         <canvas ref={canvasRef} className="h-full w-full" />
