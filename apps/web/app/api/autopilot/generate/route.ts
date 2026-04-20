@@ -4,6 +4,7 @@ import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { AUTOPILOT_DAILY_SYSTEM, buildAutopilotContext } from '@myfitlife/ai/prompts/autopilot';
 import { buildSystemPrompt } from '@/lib/ai/personas';
 import { enforceRateLimit } from '@/lib/rate-limit/with-rate-limit';
+import { calculateReadiness } from '@/lib/health/readiness';
 
 export const maxDuration = 60;
 
@@ -91,6 +92,23 @@ export async function POST(req: NextRequest) {
     activeGym,
   });
 
+  // readiness-aware context
+  let readinessContext = '';
+  try {
+    const readiness = await calculateReadiness(user.id);
+    if (readiness.score > 0) {
+      const zoneLabel =
+        readiness.zone === 'green'
+          ? 'VERDE - pode treinar forte'
+          : readiness.zone === 'yellow'
+            ? 'AMARELA - modere a intensidade'
+            : 'VERMELHA - descanse';
+      readinessContext = `\n\nREADINESS DO CORPO HOJE:\nScore: ${readiness.score}/100 (zona ${zoneLabel})\n${readiness.factors.join('\n')}\n${readiness.recommendation}\n\nIMPORTANTE: Se zona vermelha, gere treino de mobilidade/alongamento ou sugira descanso completo.\nSe zona amarela, reduza volume em 30-40% e evite exercícios de alta intensidade.`;
+    }
+  } catch {
+    // readiness calculation failed — proceed without it
+  }
+
   const anthropic = getAnthropicClient();
 
   try {
@@ -98,7 +116,7 @@ export async function POST(req: NextRequest) {
       model: CLAUDE_MODEL,
       max_tokens: 2000,
       system: buildSystemPrompt(String(profile?.coach_persona || 'leo'), AUTOPILOT_DAILY_SYSTEM),
-      messages: [{ role: 'user', content: context }],
+      messages: [{ role: 'user', content: context + readinessContext }],
     });
 
     const text = response.content

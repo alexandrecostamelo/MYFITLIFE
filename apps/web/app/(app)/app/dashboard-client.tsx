@@ -31,6 +31,11 @@ interface Props {
   };
   currentWeight?: number;
   workoutTitle?: string;
+  readiness?: {
+    score: number;
+    zone: 'green' | 'yellow' | 'red';
+    recommendation: string;
+  };
 }
 
 const TODO_ITEMS = [
@@ -100,6 +105,51 @@ export function DashboardClient(props: Props) {
       <section className="glass-card p-4">
         <WeekStrip completed={props.weekDays} />
       </section>
+
+      {/* Readiness */}
+      {props.readiness && (
+        <Link href="/app/health/readiness">
+          <div
+            className={`glass-card p-4 border ${
+              props.readiness.zone === 'red'
+                ? 'border-red-500/40'
+                : props.readiness.zone === 'yellow'
+                  ? 'border-amber-500/40'
+                  : 'border-accent/40'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="section-title">Readiness</h2>
+              <span
+                className={`text-2xl font-mono font-light ${
+                  props.readiness.zone === 'red'
+                    ? 'text-red-400'
+                    : props.readiness.zone === 'yellow'
+                      ? 'text-amber-400'
+                      : 'text-accent'
+                }`}
+              >
+                {props.readiness.score}
+              </span>
+            </div>
+            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${
+                  props.readiness.zone === 'red'
+                    ? 'bg-red-500'
+                    : props.readiness.zone === 'yellow'
+                      ? 'bg-amber-500'
+                      : 'bg-accent'
+                }`}
+                style={{ width: `${props.readiness.score}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {props.readiness.recommendation}
+            </p>
+          </div>
+        </Link>
+      )}
 
       {/* Today To-do */}
       <section className="space-y-2">

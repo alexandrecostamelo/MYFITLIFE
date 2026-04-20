@@ -27,6 +27,7 @@ export default async function DashboardPage() {
     planRes,
     weightRes,
     streakRes,
+    readinessRes,
   ] = await Promise.all([
     supabase
       .from('profiles')
@@ -72,6 +73,12 @@ export default async function DashboardPage() {
       .select('current_streak')
       .eq('user_id', user.id)
       .maybeSingle(),
+    supabase
+      .from('readiness_scores')
+      .select('score, zone, recommendation')
+      .eq('user_id', user.id)
+      .eq('date', todayStr)
+      .maybeSingle(),
   ]);
 
   // Week days completed
@@ -104,6 +111,7 @@ export default async function DashboardPage() {
   const streakRec = streakRes.data as Record<string, unknown> | null;
   const weightRec = weightRes.data as Record<string, unknown> | null;
   const planRec = planRes.data as Record<string, unknown> | null;
+  const readinessRec = readinessRes.data as Record<string, unknown> | null;
 
   const rings = [
     { value: todayMinutes, max: 60, color: '#00D9A3', label: 'Movimento' },
@@ -133,6 +141,15 @@ export default async function DashboardPage() {
       currentWeight={weightRec?.weight_kg ? Number(weightRec.weight_kg) : undefined}
       workoutTitle={planRec?.workout_suggestion ? String(planRec.program_name || 'Treino do dia pronto') : undefined}
       coachPersona={String(profileRec?.coach_persona || 'leo')}
+      readiness={
+        readinessRec
+          ? {
+              score: Number(readinessRec.score),
+              zone: String(readinessRec.zone) as 'green' | 'yellow' | 'red',
+              recommendation: String(readinessRec.recommendation || ''),
+            }
+          : undefined
+      }
     />
   );
 }
