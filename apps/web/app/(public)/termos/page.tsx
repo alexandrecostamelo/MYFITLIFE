@@ -12,7 +12,7 @@ export default function TermosPage() {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
 
-      <article className="prose prose-slate max-w-none">
+      <article className="prose prose-slate prose-invert max-w-none">
         <h1 className="text-3xl font-bold">Termos de Uso</h1>
         <p className="text-sm text-muted-foreground">Última atualização: {new Date().toLocaleDateString('pt-BR')}</p>
 

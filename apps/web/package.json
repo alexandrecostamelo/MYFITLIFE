@@ -19,7 +19,8 @@
     "build:mobile": "bash scripts/build-mobile.sh",
     "cap:sync": "cap sync",
     "cap:android": "bash scripts/build-mobile.sh android",
-    "cap:ios": "bash scripts/build-mobile.sh ios"
+    "cap:ios": "bash scripts/build-mobile.sh ios",
+    "screenshots": "npx tsx scripts/screenshots.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",

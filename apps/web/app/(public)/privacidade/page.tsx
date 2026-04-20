@@ -12,7 +12,7 @@ export default function PrivacidadePage() {
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
 
-      <article className="prose prose-slate max-w-none">
+      <article className="prose prose-slate prose-invert max-w-none">
         <h1 className="text-3xl font-bold">Política de Privacidade</h1>
         <p className="text-sm text-muted-foreground">Última atualização: {new Date().toLocaleDateString('pt-BR')}</p>
 
@@ -26,8 +26,10 @@ export default function PrivacidadePage() {
           <p><strong>Dados de cadastro:</strong> nome, email, cidade, estado.</p>
           <p><strong>Dados de saúde e fitness (categoria especial):</strong> idade, sexo, peso, altura, % gordura, objetivo, histórico de lesões, restrições alimentares, nível de atividade, sono, humor, energia.</p>
           <p><strong>Dados de uso:</strong> refeições registradas, treinos realizados, conversas com o coach de IA, interações com o aplicativo.</p>
-          <p><strong>Dados técnicos:</strong> endereço IP, tipo de dispositivo, identificador do aplicativo, logs de acesso.</p>
-          <p>Não coletamos dados de geolocalização precisa sem consentimento explícito no momento da funcionalidade correspondente.</p>
+          <p><strong>Fotos:</strong> capturadas para reconhecimento de alimentos/aparelhos e fotos de progresso. Processadas via API Claude (Anthropic). Não armazenadas permanentemente pela Anthropic.</p>
+          <p><strong>Localização:</strong> localização aproximada para check-in em academias; localização precisa durante GPS tracking de corrida. Coletadas apenas com consentimento explícito.</p>
+          <p><strong>Dados de pagamento:</strong> processados por Stripe e PagarMe. O MyFitLife não armazena números de cartão.</p>
+          <p><strong>Dados técnicos:</strong> endereço IP, tipo de dispositivo, identificador do aplicativo, push token (Firebase), logs de acesso.</p>
 
           <h2 className="text-xl font-semibold">3. Finalidades do tratamento</h2>
           <ul className="list-inside list-disc space-y-1">
@@ -54,7 +56,11 @@ export default function PrivacidadePage() {
             <li><strong>Supabase</strong> — banco de dados, autenticação e armazenamento;</li>
             <li><strong>Anthropic (Claude)</strong> — processamento de linguagem para onboarding, coach e Autopilot. Enviamos mensagens e contexto do perfil necessários à resposta; não enviamos email ou senha;</li>
             <li><strong>Vercel</strong> — hospedagem e entrega do aplicativo;</li>
-            <li><strong>Processadores de pagamento</strong> — se você contratar plano pago, dados mínimos para cobrança;</li>
+            <li><strong>Stripe e PagarMe</strong> — processamento de pagamentos (Pix, cartão, boleto);</li>
+            <li><strong>Resend</strong> — envio de emails transacionais;</li>
+            <li><strong>Sentry</strong> — relatório de erros (sem dados pessoais de saúde);</li>
+            <li><strong>PostHog</strong> — analytics de uso (sem dados de saúde);</li>
+            <li><strong>Firebase</strong> — push notifications (token do dispositivo);</li>
             <li><strong>Autoridades</strong> — quando exigido por lei ou ordem judicial.</li>
           </ul>
           <p>Não vendemos seus dados. Não compartilhamos com anunciantes.</p>
