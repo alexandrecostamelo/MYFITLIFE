@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { DashboardClient } from './dashboard-client';
+import { calculateSleepScore } from '@/lib/health/sleep-score';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,11 @@ export default async function DashboardPage() {
 
   const now = new Date();
   const todayStr = now.toISOString().slice(0, 10);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const startOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1,
+  ).toISOString();
   const startOfWeek = new Date(now.getTime() - now.getDay() * 86400000)
     .toISOString()
     .slice(0, 10);
@@ -28,26 +33,31 @@ export default async function DashboardPage() {
     weightRes,
     streakRes,
     readinessRes,
+    mealHeatRes,
+    checkinHeatRes,
+    xpRes,
   ] = await Promise.all([
     supabase
       .from('profiles')
-      .select('full_name, avatar_url, subscription_tier, coach_persona')
+      .select(
+        'full_name, avatar_url, subscription_tier, coach_persona, dashboard_metrics',
+      )
       .eq('id', user.id)
       .single(),
     supabase
       .from('morning_checkins')
       .select('id')
       .eq('user_id', user.id)
-      .eq('date', todayStr)
+      .eq('checkin_date', todayStr)
       .maybeSingle(),
     supabase
       .from('workout_logs')
-      .select('id, duration_minutes, created_at')
+      .select('id, duration_sec, created_at')
       .eq('user_id', user.id)
       .gte('created_at', startOfMonth),
     supabase
       .from('workout_logs')
-      .select('id, duration_minutes')
+      .select('id, duration_sec')
       .eq('user_id', user.id)
       .gte('created_at', todayStr),
     supabase
@@ -79,10 +89,40 @@ export default async function DashboardPage() {
       .eq('user_id', user.id)
       .eq('date', todayStr)
       .maybeSingle(),
+    // Heatmap: meals
+    supabase
+      .from('meal_logs')
+      .select('created_at')
+      .eq('user_id', user.id)
+      .gte('created_at', startOfMonth),
+    // Heatmap: checkins
+    supabase
+      .from('morning_checkins')
+      .select('checkin_date')
+      .eq('user_id', user.id)
+      .gte('checkin_date', startOfMonth.slice(0, 10)),
+    // XP total
+    supabase
+      .from('user_stats')
+      .select('total_xp')
+      .eq('user_id', user.id)
+      .maybeSingle(),
   ]);
 
+  // Calculate sleep score (non-blocking)
+  let sleepScore: { total: number; label: string; avg_hours: number; tip: string } | null =
+    null;
+  try {
+    sleepScore = await calculateSleepScore(user.id);
+  } catch {
+    // sleep score is non-critical
+  }
+
   // Week days completed
-  const workoutsAll = (workoutsMonthRes.data || []) as Record<string, unknown>[];
+  const workoutsAll = (workoutsMonthRes.data || []) as Record<
+    string,
+    unknown
+  >[];
   const workoutsWeek = workoutsAll.filter(
     (w) => String(w.created_at || '').slice(0, 10) >= startOfWeek,
   );
@@ -92,17 +132,42 @@ export default async function DashboardPage() {
     weekDays[day] = true;
   }
 
-  // Heatmap
-  const heatmapData: Record<string, number> = {};
+  // Multi-source heatmap
+  const heatmapData: Record<
+    string,
+    { workouts: number; meals: number; checkins: number }
+  > = {};
   for (const w of workoutsAll) {
-    const key = String(w.created_at || '').slice(0, 10);
-    if (key) heatmapData[key] = (heatmapData[key] || 0) + 1;
+    const k = String(w.created_at || '').slice(0, 10);
+    if (!k) continue;
+    if (!heatmapData[k])
+      heatmapData[k] = { workouts: 0, meals: 0, checkins: 0 };
+    heatmapData[k].workouts++;
+  }
+  for (const m of (mealHeatRes.data || []) as Record<string, unknown>[]) {
+    const k = String(m.created_at || '').slice(0, 10);
+    if (!k) continue;
+    if (!heatmapData[k])
+      heatmapData[k] = { workouts: 0, meals: 0, checkins: 0 };
+    heatmapData[k].meals++;
+  }
+  for (const c of (checkinHeatRes.data || []) as Record<string, unknown>[]) {
+    const k = String(c.checkin_date || '');
+    if (!k) continue;
+    if (!heatmapData[k])
+      heatmapData[k] = { workouts: 0, meals: 0, checkins: 0 };
+    heatmapData[k].checkins++;
   }
 
-  const todayWorkouts = (workoutsTodayRes.data || []) as Record<string, unknown>[];
-  const todayMinutes = todayWorkouts.reduce(
-    (s, w) => s + (Number(w.duration_minutes) || 0),
-    0,
+  const todayWorkouts = (workoutsTodayRes.data || []) as Record<
+    string,
+    unknown
+  >[];
+  const todayMinutes = Math.round(
+    todayWorkouts.reduce(
+      (s, w) => s + (Number(w.duration_sec) || 0),
+      0,
+    ) / 60,
   );
   const monthSessions = workoutsAll.length;
   const mealsCount = (mealsRes.data || []).length;
@@ -112,11 +177,23 @@ export default async function DashboardPage() {
   const weightRec = weightRes.data as Record<string, unknown> | null;
   const planRec = planRes.data as Record<string, unknown> | null;
   const readinessRec = readinessRes.data as Record<string, unknown> | null;
+  const xpRec = xpRes.data as Record<string, unknown> | null;
+
+  const streak = Number(streakRec?.current_streak) || 0;
+  const xpTotal = Number(xpRec?.total_xp) || 0;
+  const currentWeight = weightRec?.weight_kg
+    ? Number(weightRec.weight_kg)
+    : undefined;
 
   const rings = [
     { value: todayMinutes, max: 60, color: '#00D9A3', label: 'Movimento' },
-    { value: todayWorkouts.length, max: 1, color: '#FFD93D', label: 'Treino' },
-    { value: mealsCount, max: 4, color: '#FF6B6B', label: 'Nutrição' },
+    {
+      value: todayWorkouts.length,
+      max: 1,
+      color: '#FFD93D',
+      label: 'Treino',
+    },
+    { value: mealsCount, max: 4, color: '#FF6B6B', label: 'Nutri\u00e7\u00e3o' },
   ];
 
   const todo = {
@@ -126,20 +203,58 @@ export default async function DashboardPage() {
     hasPlan: !!planRec,
   };
 
+  // Configurable hero metrics
+  const allMetrics: Record<string, { value: string | number; label: string }> =
+    {
+      streak: { value: streak, label: 'Streak' },
+      sessions: { value: monthSessions, label: 'Sess\u00f5es' },
+      minutes: { value: todayMinutes, label: 'Minutos' },
+      calories: { value: '--', label: 'Kcal' },
+      weight: {
+        value: currentWeight ? `${currentWeight}` : '--',
+        label: 'Peso',
+      },
+      sleep: {
+        value: sleepScore && sleepScore.total > 0 ? sleepScore.total : '--',
+        label: 'Sono',
+      },
+      readiness: {
+        value: readinessRec ? Number(readinessRec.score) : '--',
+        label: 'Readiness',
+      },
+      xp: { value: xpTotal, label: 'XP' },
+      workouts_week: { value: workoutsWeek.length, label: 'Semana' },
+    };
+
+  const dashboardMetrics = profileRec?.dashboard_metrics;
+  const selectedMetricKeys = Array.isArray(dashboardMetrics)
+    ? (dashboardMetrics as string[]).slice(0, 3)
+    : ['streak', 'sessions', 'minutes'];
+
+  const heroMetrics = selectedMetricKeys.map(
+    (k) => allMetrics[k] || { value: '--', label: k },
+  );
+
   return (
     <DashboardClient
       name={String(profileRec?.full_name || 'Treineiro').split(' ')[0]}
-      avatar={profileRec?.avatar_url ? String(profileRec.avatar_url) : null}
+      avatar={
+        profileRec?.avatar_url ? String(profileRec.avatar_url) : null
+      }
       tier={String(profileRec?.subscription_tier || 'free')}
       rings={rings}
-      streak={Number(streakRec?.current_streak) || 0}
+      streak={streak}
       monthSessions={monthSessions}
       todayMinutes={todayMinutes}
       weekDays={weekDays}
       heatmap={heatmapData}
       todo={todo}
-      currentWeight={weightRec?.weight_kg ? Number(weightRec.weight_kg) : undefined}
-      workoutTitle={planRec?.workout_suggestion ? String(planRec.program_name || 'Treino do dia pronto') : undefined}
+      currentWeight={currentWeight}
+      workoutTitle={
+        planRec?.workout_suggestion
+          ? String(planRec.program_name || 'Treino do dia pronto')
+          : undefined
+      }
       coachPersona={String(profileRec?.coach_persona || 'leo')}
       readiness={
         readinessRec
@@ -150,6 +265,17 @@ export default async function DashboardPage() {
             }
           : undefined
       }
+      sleepScore={
+        sleepScore && sleepScore.total > 0
+          ? {
+              total: sleepScore.total,
+              label: sleepScore.label,
+              avgHours: sleepScore.avg_hours,
+              tip: sleepScore.tip,
+            }
+          : undefined
+      }
+      heroMetrics={heroMetrics}
     />
   );
 }

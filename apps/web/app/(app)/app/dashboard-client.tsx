@@ -6,7 +6,14 @@ import { ActivityRings } from '@/components/ui/activity-rings';
 import { MetricHero } from '@/components/ui/metric-hero';
 import { WeekStrip } from '@/components/ui/week-strip';
 import { CalendarHeatmap } from '@/components/ui/calendar-heatmap';
-import { Bell, ChevronRight, Check, Circle, Scale } from 'lucide-react';
+import {
+  Bell,
+  ChevronRight,
+  Check,
+  Circle,
+  Scale,
+  Moon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CoachAvatar } from '@/components/ui/coach-avatar';
@@ -22,7 +29,10 @@ interface Props {
   monthSessions: number;
   todayMinutes: number;
   weekDays: boolean[];
-  heatmap: Record<string, number>;
+  heatmap: Record<
+    string,
+    number | { workouts: number; meals: number; checkins: number }
+  >;
   todo: {
     checkinDone: boolean;
     workoutDone: boolean;
@@ -36,18 +46,33 @@ interface Props {
     zone: 'green' | 'yellow' | 'red';
     recommendation: string;
   };
+  sleepScore?: {
+    total: number;
+    label: string;
+    avgHours: number;
+    tip: string;
+  };
+  heroMetrics?: { value: string | number; label: string }[];
 }
 
 const TODO_ITEMS = [
   { key: 'checkinDone', label: 'Check-in matinal', href: '/app/checkin' },
   { key: 'workoutDone', label: 'Treinar hoje', href: '/app/workout' },
-  { key: 'mealsDone', label: 'Registrar 3 refeições', href: '/app/nutrition' },
+  {
+    key: 'mealsDone',
+    label: 'Registrar 3 refei\u00e7\u00f5es',
+    href: '/app/nutrition',
+  },
 ] as const;
 
 export function DashboardClient(props: Props) {
   const now = new Date();
   const greeting =
-    now.getHours() < 12 ? 'Bom dia' : now.getHours() < 18 ? 'Boa tarde' : 'Boa noite';
+    now.getHours() < 12
+      ? 'Bom dia'
+      : now.getHours() < 18
+        ? 'Boa tarde'
+        : 'Boa noite';
   const dateStr = now.toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: 'numeric',
@@ -55,7 +80,9 @@ export function DashboardClient(props: Props) {
   });
 
   const [showWeight, setShowWeight] = useState(false);
-  const [weightInput, setWeightInput] = useState(props.currentWeight?.toString() || '');
+  const [weightInput, setWeightInput] = useState(
+    props.currentWeight?.toString() || '',
+  );
 
   const saveWeight = async () => {
     if (!weightInput) return;
@@ -67,13 +94,23 @@ export function DashboardClient(props: Props) {
     setShowWeight(false);
   };
 
+  const metrics = props.heroMetrics || [
+    { label: 'Streak', value: props.streak },
+    { label: 'Sess\u00f5es', value: props.monthSessions },
+    { label: 'Minutos', value: props.todayMinutes },
+  ];
+
   return (
     <main className="mx-auto max-w-lg px-4 pt-4 pb-28 space-y-5">
       {/* Header */}
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {props.avatar ? (
-            <img src={props.avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
+            <img
+              src={props.avatar}
+              alt=""
+              className="h-10 w-10 rounded-full object-cover"
+            />
           ) : (
             <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center text-lg font-bold text-accent">
               {props.name[0]}
@@ -83,7 +120,9 @@ export function DashboardClient(props: Props) {
             <h1 className="text-lg font-semibold">
               {greeting}, {props.name}
             </h1>
-            <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
+            <p className="text-xs text-muted-foreground capitalize">
+              {dateStr}
+            </p>
           </div>
         </div>
         <Link href="/app/notifications">
@@ -91,13 +130,17 @@ export function DashboardClient(props: Props) {
         </Link>
       </header>
 
-      {/* Activity Rings + Metrics */}
+      {/* Activity Rings + Configurable Metrics */}
       <section className="glass-card p-5 flex flex-col items-center">
-        <ActivityRings rings={props.rings} size={160} strokeWidth={14} />
+        <ActivityRings
+          rings={props.rings}
+          size={160}
+          strokeWidth={14}
+        />
         <div className="grid grid-cols-3 gap-6 mt-5 w-full">
-          <MetricHero label="Streak" value={props.streak} />
-          <MetricHero label="Sessões" value={props.monthSessions} />
-          <MetricHero label="Minutos" value={props.todayMinutes} />
+          {metrics.map((m, i) => (
+            <MetricHero key={i} label={m.label} value={m.value} />
+          ))}
         </div>
       </section>
 
@@ -105,6 +148,39 @@ export function DashboardClient(props: Props) {
       <section className="glass-card p-4">
         <WeekStrip completed={props.weekDays} />
       </section>
+
+      {/* Sleep Score */}
+      {props.sleepScore && (
+        <Link href="/app/checkin">
+          <div className="glass-card p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Moon className="h-4 w-4 text-violet-400" />
+                <div>
+                  <p className="metric-label">Sleep Fitness</p>
+                  <p className="font-mono text-2xl font-light">
+                    {props.sleepScore.total}
+                    <span className="text-xs text-muted-foreground">
+                      /100
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-accent font-medium">
+                  {props.sleepScore.label}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {props.sleepScore.avgHours}h m\u00e9dia
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {props.sleepScore.tip}
+            </p>
+          </div>
+        </Link>
+      )}
 
       {/* Readiness */}
       {props.readiness && (
@@ -193,7 +269,11 @@ export function DashboardClient(props: Props) {
                 <span className="text-sm text-muted-foreground">kg</span>
               </p>
             </div>
-            <Button size="sm" variant="ghost" onClick={() => setShowWeight(!showWeight)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowWeight(!showWeight)}
+            >
               <Scale className="h-4 w-4 mr-1" /> Atualizar
             </Button>
           </div>
@@ -220,11 +300,17 @@ export function DashboardClient(props: Props) {
         <Link href="/app/workout">
           <div className="glass-card-elevated p-4 flex items-center gap-3 accent-glow">
             <div className="h-10 w-10 rounded-xl bg-accent/20 flex items-center justify-center">
-              <span className="text-accent text-lg">{'\uD83D\uDCAA'}</span>
+              <span className="text-accent text-lg">
+                {'\uD83D\uDCAA'}
+              </span>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold">{props.workoutTitle}</p>
-              <p className="text-xs text-muted-foreground">Autopilot gerou seu treino</p>
+              <p className="text-sm font-semibold">
+                {props.workoutTitle}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Autopilot gerou seu treino
+              </p>
             </div>
             <ChevronRight className="h-5 w-5 text-accent" />
           </div>
@@ -235,7 +321,12 @@ export function DashboardClient(props: Props) {
       {props.coachPersona && (
         <Link href="/app/coach">
           <div className="glass-card p-4 flex items-center gap-3">
-            <CoachAvatar persona={props.coachPersona as 'leo' | 'sofia' | 'rafa'} size="md" />
+            <CoachAvatar
+              persona={
+                props.coachPersona as 'leo' | 'sofia' | 'rafa'
+              }
+              size="md"
+            />
             <div className="flex-1">
               <p className="text-sm font-semibold">
                 {getPersona(props.coachPersona).name}
