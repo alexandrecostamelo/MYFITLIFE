@@ -3,7 +3,9 @@ export type HeartbeatJob =
   | 'proactive'
   | 'weekly_summary'
   | 'daily_cleanup'
-  | 'nfse_queue';
+  | 'nfse_queue'
+  | 'pix_renewals'
+  | 'pix_check_payments';
 
 const URL_MAP: Record<HeartbeatJob, string | undefined> = {
   autopilot: process.env.HEARTBEAT_AUTOPILOT_URL,
@@ -11,6 +13,8 @@ const URL_MAP: Record<HeartbeatJob, string | undefined> = {
   weekly_summary: process.env.HEARTBEAT_WEEKLY_SUMMARY_URL,
   daily_cleanup: process.env.HEARTBEAT_DAILY_CLEANUP_URL,
   nfse_queue: process.env.HEARTBEAT_NFSE_QUEUE_URL,
+  pix_renewals: process.env.HEARTBEAT_PIX_RENEWALS_URL,
+  pix_check_payments: process.env.HEARTBEAT_PIX_CHECK_PAYMENTS_URL,
 };
 
 export async function sendHeartbeat(

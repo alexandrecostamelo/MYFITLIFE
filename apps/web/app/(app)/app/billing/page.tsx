@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, CheckCircle2, Star, Receipt, FileText } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle2, Star, Receipt, FileText, Smartphone } from 'lucide-react';
 
 const STATUS_LABEL: Record<string, string> = {
   active: 'Ativa',
@@ -30,6 +30,7 @@ function BillingContent() {
 
   const [sub, setSub] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [pendingPix, setPendingPix] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
@@ -38,9 +39,11 @@ function BillingContent() {
     Promise.all([
       fetch('/api/me/subscription').then((r) => r.json()),
       fetch('/api/billing/transactions').then((r) => r.json()),
-    ]).then(([subData, txData]) => {
+      fetch('/api/billing/pix-pending').then((r) => r.json()).catch(() => ({ charge: null })),
+    ]).then(([subData, txData, pixData]) => {
       setSub(subData.subscription);
       setTransactions(txData.transactions || []);
+      setPendingPix(pixData.charge || null);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -142,6 +145,40 @@ function BillingContent() {
           </Button>
         )}
       </Card>
+
+      {/* Pix pendente de renovação */}
+      {pendingPix && (
+        <Card className="mb-4 border-amber-500/40 bg-amber-500/10 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5 text-amber-600" />
+            <div>
+              <h3 className="font-semibold text-sm">Renovação pendente</h3>
+              <p className="text-xs text-muted-foreground">
+                R$ {(pendingPix.amount_cents / 100).toFixed(2).replace('.', ',')} via Pix
+                {pendingPix.expires_at && ` · expira em ${new Date(pendingPix.expires_at).toLocaleDateString('pt-BR')}`}
+              </p>
+            </div>
+          </div>
+          {pendingPix.qr_code_url && (
+            <img src={pendingPix.qr_code_url} alt="QR Pix" className="w-48 h-48 mx-auto rounded" />
+          )}
+          {pendingPix.qr_code && (
+            <>
+              <div className="rounded bg-background p-2 text-xs font-mono break-all max-h-24 overflow-y-auto">
+                {pendingPix.qr_code}
+              </div>
+              <Button
+                onClick={() => navigator.clipboard?.writeText(pendingPix.qr_code)}
+                variant="outline"
+                size="sm"
+                className="w-full"
+              >
+                Copiar código Pix
+              </Button>
+            </>
+          )}
+        </Card>
+      )}
 
       {/* Histórico de transações */}
       {transactions.length > 0 && (

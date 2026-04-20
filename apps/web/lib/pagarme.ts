@@ -134,3 +134,61 @@ export async function getPagarMeSubscription(subId: string) {
 export async function cancelPagarMeSubscription(subId: string) {
   return pmRequest(`/subscriptions/${subId}`, 'DELETE');
 }
+
+// ── Pix Charges ───────────────────────────────────────────────────
+
+export async function createPagarMePixCharge(params: {
+  amountCents: number;
+  customer: { name: string; email: string; document: string; document_type: 'CPF' | 'CNPJ' };
+  expiresInSeconds?: number;
+  description?: string;
+  metadata?: Record<string, string>;
+}) {
+  const data = await pmRequest<Record<string, unknown>>('/orders', 'POST', {
+    items: [
+      {
+        amount: params.amountCents,
+        description: params.description || 'Assinatura MyFitLife Pro',
+        quantity: 1,
+      },
+    ],
+    customer: {
+      name: params.customer.name,
+      email: params.customer.email,
+      document: params.customer.document.replace(/\D/g, ''),
+      document_type: params.customer.document_type,
+      type: 'individual',
+    },
+    payments: [
+      {
+        payment_method: 'pix',
+        pix: { expires_in: params.expiresInSeconds || 7 * 24 * 3600 },
+      },
+    ],
+    metadata: params.metadata,
+  });
+
+  const charges = data.charges as Record<string, unknown>[] | undefined;
+  const charge = charges?.[0];
+  const txn = charge?.last_transaction as Record<string, unknown> | undefined;
+
+  return {
+    order_id: data.id as string,
+    charge_id: charge?.id as string,
+    qr_code: txn?.qr_code as string | undefined,
+    qr_code_url: txn?.qr_code_url as string | undefined,
+    expires_at: txn?.expires_at as string | undefined,
+    amount: charge?.amount as number | undefined,
+    status: charge?.status as string | undefined,
+  };
+}
+
+export async function getPagarMeChargeStatus(chargeId: string) {
+  const data = await pmRequest<Record<string, unknown>>(`/charges/${chargeId}`);
+  return {
+    id: data.id as string,
+    status: data.status as string,
+    paid_at: data.paid_at as string | undefined,
+    amount: data.amount as number | undefined,
+  };
+}

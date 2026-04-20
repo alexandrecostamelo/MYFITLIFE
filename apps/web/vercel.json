@@ -5,6 +5,8 @@
     { "path": "/api/cron/weekly-summary", "schedule": "0 12 * * 1" },
     { "path": "/api/cron/cleanup", "schedule": "0 4 * * *" },
     { "path": "/api/cron/challenges-status", "schedule": "5 0 * * *" },
-    { "path": "/api/cron/video-rooms-cleanup", "schedule": "0 3 * * *" }
+    { "path": "/api/cron/video-rooms-cleanup", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/pix-renewals", "schedule": "0 11 * * *" },
+    { "path": "/api/cron/pix-check-payments", "schedule": "0 */2 * * *" }
   ]
 }
