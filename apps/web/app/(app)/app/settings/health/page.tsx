@@ -17,12 +17,18 @@ export default async function HealthSettingsPage() {
     .eq('id', user.id)
     .single();
 
-  const { data: recentSamples } = await supabase
-    .from('health_samples')
-    .select('metric, value, unit, source, sampled_at')
-    .eq('user_id', user.id)
-    .order('sampled_at', { ascending: false })
-    .limit(20);
+  const [{ data: recentSamples }, { data: wearableConns }] = await Promise.all([
+    supabase
+      .from('health_samples')
+      .select('metric, value, unit, source, sampled_at')
+      .eq('user_id', user.id)
+      .order('sampled_at', { ascending: false })
+      .limit(20),
+    supabase
+      .from('wearable_connections')
+      .select('provider, is_active, last_sync_at, device_name')
+      .eq('user_id', user.id),
+  ]);
 
   return (
     <HealthSettingsClient
@@ -33,6 +39,7 @@ export default async function HealthSettingsPage() {
         profile?.last_health_sync ? String(profile.last_health_sync) : null
       }
       recentSamples={(recentSamples || []) as Record<string, unknown>[]}
+      wearableConnections={(wearableConns || []) as Record<string, unknown>[]}
     />
   );
 }

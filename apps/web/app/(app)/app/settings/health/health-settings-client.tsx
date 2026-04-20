@@ -12,6 +12,9 @@ import {
   Scale,
   Activity,
   Smartphone,
+  Watch,
+  Link2,
+  Unlink,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -21,7 +24,15 @@ interface Props {
   source: string | null;
   lastSync: string | null;
   recentSamples: Record<string, unknown>[];
+  wearableConnections?: Record<string, unknown>[];
 }
+
+const WEARABLES = [
+  { id: 'fitbit', name: 'Fitbit', ready: true },
+  { id: 'whoop', name: 'WHOOP', ready: true },
+  { id: 'garmin', name: 'Garmin', ready: false },
+  { id: 'mi_band', name: 'Mi Band / Zepp', ready: false },
+];
 
 const METRIC_META: Record<string, { label: string; icon: LucideIcon }> = {
   steps: { label: 'Passos', icon: Footprints },
@@ -39,6 +50,7 @@ export function HealthSettingsClient({
   enabled,
   lastSync,
   recentSamples,
+  wearableConnections = [],
 }: Props) {
   const router = useRouter();
   const {
@@ -214,6 +226,69 @@ export function HealthSettingsClient({
           </section>
         </>
       )}
+      <section className="space-y-2">
+        <h2 className="section-title flex items-center gap-2">
+          <Watch className="h-4 w-4" />
+          Wearables
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Conecte seu wearable para sincronizar dados automaticamente, mesmo sem
+          abrir o app.
+        </p>
+        {WEARABLES.map((w) => {
+          const conn = wearableConnections.find(
+            (c) => String(c.provider) === w.id && !!c.is_active,
+          );
+          const lastWSync = conn?.last_sync_at
+            ? new Date(String(conn.last_sync_at)).toLocaleString('pt-BR')
+            : null;
+
+          return (
+            <div
+              key={w.id}
+              className="glass-card p-3 flex items-center gap-3"
+            >
+              <Watch className="h-5 w-5 text-accent" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">{w.name}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {conn
+                    ? `Conectado${lastWSync ? ` · Sync: ${lastWSync}` : ''}`
+                    : w.ready
+                      ? 'Pronto pra conectar'
+                      : 'Em breve'}
+                </p>
+              </div>
+              {conn ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={async () => {
+                    await fetch(`/api/wearables/disconnect/${w.id}`, {
+                      method: 'POST',
+                    });
+                    router.refresh();
+                  }}
+                >
+                  <Unlink className="h-3 w-3 mr-1" />
+                  Desconectar
+                </Button>
+              ) : w.ready ? (
+                <a href={`/api/wearables/connect/${w.id}`}>
+                  <Button size="sm" variant="outline">
+                    <Link2 className="h-3 w-3 mr-1" />
+                    Conectar
+                  </Button>
+                </a>
+              ) : (
+                <span className="text-[10px] text-muted-foreground italic">
+                  Em breve
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </section>
     </main>
   );
 }
