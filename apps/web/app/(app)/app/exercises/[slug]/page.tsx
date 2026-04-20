@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import { VideoGallery } from '@/components/exercise/VideoGallery';
+import { AnatomyViewer } from '@/components/anatomy/AnatomyViewer';
 import Link from 'next/link';
 import { ArrowLeft, Dumbbell } from 'lucide-react';
 
@@ -63,25 +64,15 @@ export default async function ExerciseDetailPage({
         </section>
       )}
 
-      {/* Muscles */}
+      {/* Muscles 3D */}
       {primaryMuscles.length > 0 && (
-        <section className="space-y-1">
-          <h2 className="text-sm font-semibold">Músculos principais</h2>
-          <div className="flex flex-wrap gap-1">
-            {primaryMuscles.map((m) => (
-              <span key={m} className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">{m}</span>
-            ))}
-          </div>
-          {secondaryMuscles.length > 0 && (
-            <>
-              <h3 className="mt-2 text-xs font-medium text-muted-foreground">Secundários</h3>
-              <div className="flex flex-wrap gap-1">
-                {secondaryMuscles.map((m) => (
-                  <span key={m} className="rounded bg-muted px-2 py-0.5 text-xs">{m}</span>
-                ))}
-              </div>
-            </>
-          )}
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold">Músculos trabalhados</h2>
+          <AnatomyViewer
+            primaryGroups={primaryMuscles}
+            secondaryGroups={secondaryMuscles}
+            height={360}
+          />
         </section>
       )}
 
