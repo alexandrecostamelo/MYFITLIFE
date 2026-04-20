@@ -1,7 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { XP_REWARDS, type XpEvent, levelFromTotalXp, computeStreak } from '@myfitlife/core/gamification';
+import { postStreakMilestone } from '@/lib/feed/create-post';
 
 type Client = SupabaseClient<any, any, any>;
+
+const STREAK_MILESTONES = [7, 14, 30, 60, 100, 365];
 
 export async function ensureUserStats(supabase: Client, userId: string) {
   const { data } = await supabase.from('user_stats').select('*').eq('user_id', userId).maybeSingle();
@@ -57,6 +60,10 @@ export async function touchActivity(supabase: Client, userId: string) {
 
   if (result.newStreak > (stats.current_streak || 0)) {
     await awardXp(supabase, userId, 'STREAK_DAY', { description: `Streak dia ${result.newStreak}` });
+
+    if (STREAK_MILESTONES.includes(result.newStreak)) {
+      postStreakMilestone(userId, result.newStreak).catch(console.error);
+    }
   }
 
   return { streak: result.newStreak };

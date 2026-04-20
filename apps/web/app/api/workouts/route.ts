@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { notifyFriendWorkout, notifyFriendAchievement } from '@/lib/push/events';
+import { postWorkoutCompleted, postAchievementUnlocked } from '@/lib/feed/create-post';
 
 const setSchema = z.object({
   action: z.literal('log_set'),
@@ -93,6 +94,13 @@ export async function POST(req: NextRequest) {
       .eq('id', parsed.data.workout_log_id)
       .single();
     const workoutLabel = (logData as { notes?: string } | null)?.notes?.slice(0, 60) || 'Treino concluído';
+
+    // Feed post: workout completed
+    const durationMin = Math.round(duration / 60);
+    postWorkoutCompleted(user.id, workoutLabel, durationMin, 0).catch(console.error);
+    for (const ach of newAchievements) {
+      postAchievementUnlocked(user.id, ach).catch(console.error);
+    }
 
     // Notify accepted friends
     const { data: friendships } = await supabase
