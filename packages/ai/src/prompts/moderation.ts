@@ -1,43 +1,67 @@
 export const MODERATION_SYSTEM = `
-Você é o moderador de conteúdo do MyFitLife, um app de fitness e bem-estar.
-Sua tarefa é avaliar se um texto é apropriado pra comunidade.
+Você é o moderador de conteúdo do MyFitLife, app fitness brasileiro.
 
-RECUSE (flagged) quando o conteúdo:
-- Promove ou normaliza transtornos alimentares (anorexia, bulimia, jejum extremo, "thinspo", "meanspo", peso alvo dangerously low)
-- Faz body shaming ou ataca fisicamente outras pessoas
-- É sexualmente explícito, lúbrico ou conteúdo adulto
-- Promove violência, autoflagelação ou suicídio
-- Incentiva uso de substâncias ilegais, anabolizantes sem prescrição ou doses perigosas
-- Contém discurso de ódio (racismo, homofobia, misoginia, etc.)
-- É assédio direto a outro usuário
-- Promove serviços falsos/golpes/MLM relacionados a fitness
-- Dá conselhos médicos perigosos ou sem base
+Analise o post e retorne JSON com:
+- verdict: "approve" | "review" | "reject"
+- score: 0.00 (limpo) a 1.00 (proibido)
+- categories: array com 0 ou mais: spam, harassment, hate_speech, nudity_text, violence, misinformation_health, self_harm, dangerous_advice, impersonation, off_topic_commercial, pro_ana, pro_overtraining, doping_promotion, body_shaming, eating_disorder
+- reason: 1 frase curta em PT-BR
 
-APROVE (approved) quando o conteúdo:
-- Celebra progresso pessoal
-- Compartilha dicas/dúvidas genuínas de treino ou nutrição
-- Faz crítica construtiva
-- Pede ajuda ou apoio emocional saudável
-- Compartilha receitas, rotinas, reflexões fitness-relacionadas
+Regras:
+- approve: post normal fitness, motivação, dúvida, celebração, receitas, rotinas
+- reject (score >= 0.80): hate speech explícito, ameaça, doxing, pornografia, pro-suicídio, venda de anabolizantes sem receita, golpe, assédio direto
+- review (score 0.40-0.79): linguagem agressiva ambígua, conselhos de saúde duvidosos, dieta radical (<1000 kcal), promoção de overtraining, possível pro-ana, links suspeitos, crítica dura a pessoa identificável, body shaming leve
 
-Responda SEMPRE em JSON puro:
+Contexto fitness:
+- "Vou quebrar tudo no treino hoje" -> APPROVE (gíria positiva)
+- "Dieta de 600kcal funciona?" -> REVIEW (pro-ana risco)
+- "Quem tem receita de oxandrolona?" -> REJECT (doping sem receita)
+- "Você é uma vaca gorda" -> REJECT (assédio + body shaming)
+- "Personal X é um picareta" -> REVIEW (crítica a pessoa identificável)
+- "Compre meu curso!" com link -> REVIEW (off_topic_commercial)
+- "Sou grato pelo progresso" -> APPROVE
 
-{
-  "decision": "approved" | "flagged",
-  "reason": "explicação curta se flagged, ou null se approved",
-  "scores": {
-    "eating_disorder": 0-1,
-    "body_shaming": 0-1,
-    "sexual": 0-1,
-    "violence": 0-1,
-    "hate_speech": 0-1,
-    "unsafe_advice": 0-1
-  }
-}
-
-Em dúvida, prefira approved — só recuse quando há sinais claros de conteúdo prejudicial.
+Retorne APENAS o JSON, sem markdown, sem explicação.
 `.trim();
 
-export function buildModerationContext(text: string): string {
-  return `Avalie este conteúdo postado por um usuário:\n\n"${text}"\n\nResponda em JSON.`;
+export type ModerationVerdict = 'approve' | 'review' | 'reject';
+
+export interface ModerationResult {
+  verdict: ModerationVerdict;
+  score: number;
+  categories: string[];
+  reason: string;
+}
+
+export function buildModerationContext(text: string, context?: string): string {
+  return `Contexto: ${context || 'feed'}\n\nPost:\n"""${text.slice(0, 2000)}"""`;
+}
+
+/**
+ * Parse raw AI response into structured ModerationResult
+ */
+export function parseModerationResponse(raw: string): ModerationResult {
+  try {
+    const match = raw.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(match ? match[0] : raw);
+
+    const verdict: ModerationVerdict =
+      parsed.verdict === 'reject' || parsed.verdict === 'review' || parsed.verdict === 'approve'
+        ? parsed.verdict
+        : 'review';
+
+    return {
+      verdict,
+      score: typeof parsed.score === 'number' ? Math.max(0, Math.min(1, parsed.score)) : 0.5,
+      categories: Array.isArray(parsed.categories) ? parsed.categories.slice(0, 5) : [],
+      reason: typeof parsed.reason === 'string' ? parsed.reason.slice(0, 300) : 'sem motivo',
+    };
+  } catch {
+    return {
+      verdict: 'review',
+      score: 0.5,
+      categories: ['parse_error'],
+      reason: 'IA não retornou JSON válido, enviado para revisão humana',
+    };
+  }
 }

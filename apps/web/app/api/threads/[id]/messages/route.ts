@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
   if (!parsed.success) return NextResponse.json({ error: 'invalid' }, { status: 400 });
 
   const moderation = await moderateText(parsed.data.content);
-  if (moderation.decision === 'flagged') {
+  if (moderation.decision === 'rejected') {
     return NextResponse.json({ error: 'flagged', reason: moderation.reason }, { status: 400 });
   }
 

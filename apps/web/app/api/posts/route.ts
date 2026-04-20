@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { moderateText } from '@/lib/moderation';
+import { applyTextModeration, logModerationAction } from '@/lib/moderation/apply';
 import { z } from 'zod';
 
 export const maxDuration = 30;
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('community_posts')
     .select('*')
-    .eq('moderation_status', 'approved')
+    .or(`moderation_status.eq.approved,and(moderation_status.eq.pending_review,author_id.eq.${user.id})`)
     .order('created_at', { ascending: false })
     .limit(20);
 
@@ -156,7 +156,18 @@ export async function POST(req: NextRequest) {
     if (!membership) return NextResponse.json({ error: 'not_member' }, { status: 403 });
   }
 
-  const moderation = await moderateText(parsed.data.content);
+  const context = groupId ? 'group' : 'feed';
+  const mod = await applyTextModeration(parsed.data.content, user.id, context);
+
+  if (mod.decision === 'rejected') {
+    return NextResponse.json({
+      error: 'content_rejected',
+      message: `Post bloqueado: ${mod.reason}`,
+      categories: mod.categories,
+      moderation_status: 'rejected',
+      moderation_reason: mod.reason,
+    }, { status: 422 });
+  }
 
   let photoPath: string | null = null;
   if (photoFile && photoFile.size > 0) {
@@ -189,18 +200,26 @@ export async function POST(req: NextRequest) {
       group_id: groupId || null,
       content: parsed.data.content,
       photo_path: photoPath,
-      moderation_status: moderation.decision,
-      moderation_reason: moderation.reason,
-      moderation_score: moderation.scores,
+      moderation_status: mod.decision,
+      moderation_reason: mod.reason,
+      moderation_categories: mod.categories,
+      ai_moderation_score: mod.score,
     })
     .select('id')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  logModerationAction(
+    null, 'post', created.id, user.id,
+    mod.decision === 'approved' ? 'approve' : 'remove',
+    mod.reason || 'Moderação automática IA',
+    'ai_auto',
+  ).catch(console.error);
+
   return NextResponse.json({
     id: created.id,
-    moderation_status: moderation.decision,
-    moderation_reason: moderation.reason,
+    moderation_status: mod.decision,
+    moderation_reason: mod.reason,
   });
 }

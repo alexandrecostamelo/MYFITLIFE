@@ -68,13 +68,16 @@ export default function NewPostPage() {
     setSaving(false);
 
     if (!res.ok) {
-      setError(data.error || 'Erro ao postar');
+      if (data.error === 'content_rejected') {
+        setError(`Post bloqueado pela moderação: ${data.moderation_reason || 'conteúdo inadequado'}`);
+      } else {
+        setError(data.error || 'Erro ao postar');
+      }
       return;
     }
 
-    if (data.moderation_status === 'flagged') {
-      alert('Seu post foi sinalizado pela moderação e não foi publicado. Motivo: ' + (data.moderation_reason || 'conteúdo inadequado'));
-      return;
+    if (data.moderation_status === 'pending_review') {
+      alert('Seu post foi publicado mas está em revisão. Apenas você pode vê-lo até ser aprovado pela moderação.');
     }
 
     router.push('/app/community');

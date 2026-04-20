@@ -29,6 +29,21 @@ export async function GET(req: NextRequest) {
       .delete({ count: 'exact' })
       .lt('blocked_until', new Date().toISOString());
 
+    // Expire temporary bans
+    await supabase
+      .from('user_moderation_state')
+      .update({ is_banned: false, banned_until: null, ban_reason: null } as Record<string, unknown>)
+      .not('banned_until', 'is', null)
+      .lt('banned_until', new Date().toISOString());
+
+    // Cleanup old reviewed reports (>30 days)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+    await supabase
+      .from('content_reports')
+      .delete()
+      .lt('reviewed_at', thirtyDaysAgo)
+      .in('status', ['reviewed', 'reviewed_kept', 'reviewed_removed', 'dismissed']);
+
     return NextResponse.json({
       cache_deleted: cacheDeleted,
       rate_limits_deleted: limitsDeleted,

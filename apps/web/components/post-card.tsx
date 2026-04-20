@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
-import { Heart, MessageCircle, MoreVertical, Flag, Trash2, UserX } from 'lucide-react';
+import { Heart, MessageCircle, MoreVertical, Trash2, UserX, AlertTriangle } from 'lucide-react';
+import { ReportButton } from '@/components/feed/ReportButton';
 
 type Post = {
   id: string;
@@ -16,6 +17,7 @@ type Post = {
   author: { id?: string; full_name: string | null; username: string | null; avatar_url: string | null };
   group: { slug: string; name: string; cover_emoji: string } | null;
   author_id: string;
+  moderation_status?: string;
 };
 
 export function PostCard({ post, currentUserId, onDelete }: { post: Post; currentUserId: string; onDelete?: () => void }) {
@@ -28,19 +30,6 @@ export function PostCard({ post, currentUserId, onDelete }: { post: Post; curren
     setLiked(newLiked);
     setLikesCount(newLiked ? likesCount + 1 : likesCount - 1);
     await fetch(`/api/posts/${post.id}/like`, { method: newLiked ? 'POST' : 'DELETE' });
-  }
-
-  async function report() {
-    setMenuOpen(false);
-    const reason = prompt('Motivo da denúncia:\n1. spam\n2. harassment\n3. eating_disorder\n4. hate_speech\n5. inappropriate\n6. other\n\nDigite o motivo:');
-    if (!reason) return;
-    const details = prompt('Detalhes adicionais (opcional):');
-    await fetch('/api/reports', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target_type: 'post', target_id: post.id, reason, details: details || undefined }),
-    });
-    alert('Denúncia enviada. Obrigado.');
   }
 
   async function block() {
@@ -104,9 +93,7 @@ export function PostCard({ post, currentUserId, onDelete }: { post: Post; curren
                   </button>
                 ) : (
                   <>
-                    <button onClick={report} className="flex w-full items-center gap-2 p-2 text-left text-sm hover:bg-slate-50">
-                      <Flag className="h-3 w-3" /> Denunciar
-                    </button>
+                    <ReportButton targetType="post" targetId={post.id} />
                     <button onClick={block} className="flex w-full items-center gap-2 p-2 text-left text-sm text-red-600 hover:bg-slate-50">
                       <UserX className="h-3 w-3" /> Bloquear
                     </button>
@@ -117,6 +104,13 @@ export function PostCard({ post, currentUserId, onDelete }: { post: Post; curren
           )}
         </div>
       </div>
+
+      {post.moderation_status === 'pending_review' && isOwn && (
+        <div className="mb-2 flex items-start gap-2 rounded border border-amber-500/30 bg-amber-500/10 p-2 text-xs text-amber-800 dark:text-amber-300">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+          Este post está em revisão e só você pode vê-lo até ser aprovado.
+        </div>
+      )}
 
       <p className="mb-3 whitespace-pre-wrap text-sm">{post.content}</p>
 

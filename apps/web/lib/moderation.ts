@@ -1,11 +1,22 @@
-import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
-import { MODERATION_SYSTEM, buildModerationContext } from '@myfitlife/ai/prompts/moderation';
+import { getAnthropicClient, CLAUDE_MODEL_FAST } from '@myfitlife/ai/client';
+import {
+  MODERATION_SYSTEM,
+  buildModerationContext,
+  parseModerationResponse,
+  type ModerationVerdict,
+  type ModerationResult,
+} from '@myfitlife/ai/prompts/moderation';
 
-type ModerationResult = {
-  decision: 'approved' | 'flagged';
+export type { ModerationVerdict, ModerationResult };
+
+export type ModerationDecision = 'approved' | 'pending_review' | 'rejected';
+
+export interface AppliedModeration {
+  decision: ModerationDecision;
   reason: string | null;
-  scores: Record<string, number>;
-};
+  categories: string[];
+  score: number;
+}
 
 const BANNED_TERMS = [
   'thinspo', 'meanspo', 'promana', 'pro-ana', 'pro-mia',
@@ -22,41 +33,53 @@ export function quickLocalCheck(text: string): { passes: boolean; reason?: strin
   return { passes: true };
 }
 
-export async function moderateText(text: string): Promise<ModerationResult> {
+export async function moderateText(text: string, context?: string): Promise<AppliedModeration> {
+  if (!text || text.trim().length === 0) {
+    return { decision: 'approved', reason: null, categories: [], score: 0 };
+  }
+
   const local = quickLocalCheck(text);
   if (!local.passes) {
     return {
-      decision: 'flagged',
+      decision: 'rejected',
       reason: local.reason || 'Termo proibido',
-      scores: {},
+      categories: ['banned_term'],
+      score: 1.0,
     };
   }
 
   try {
     const anthropic = getAnthropicClient();
     const response = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 300,
+      model: CLAUDE_MODEL_FAST,
+      max_tokens: 200,
       system: MODERATION_SYSTEM,
-      messages: [{ role: 'user', content: buildModerationContext(text) }],
+      messages: [{ role: 'user', content: buildModerationContext(text, context) }],
     });
 
-    const txt = response.content
+    const raw = response.content
       .filter((c) => c.type === 'text')
       .map((c) => ('text' in c ? c.text : ''))
       .join('\n');
 
-    const jsonMatch = txt.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return { decision: 'approved', reason: null, scores: {} };
+    const result = parseModerationResponse(raw);
 
-    const parsed = JSON.parse(jsonMatch[0]);
     return {
-      decision: parsed.decision === 'flagged' ? 'flagged' : 'approved',
-      reason: parsed.reason || null,
-      scores: parsed.scores || {},
+      decision: verdictToDecision(result.verdict),
+      reason: result.reason,
+      categories: result.categories,
+      score: result.score,
     };
   } catch (err) {
     console.error('[moderateText]', err);
-    return { decision: 'approved', reason: null, scores: {} };
+    return { decision: 'approved', reason: null, categories: [], score: 0 };
+  }
+}
+
+function verdictToDecision(verdict: ModerationVerdict): ModerationDecision {
+  switch (verdict) {
+    case 'reject': return 'rejected';
+    case 'review': return 'pending_review';
+    case 'approve': return 'approved';
   }
 }
