@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { requestSubscriptionNfse } from '@/lib/nfse/subscription-issuer';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -191,6 +192,18 @@ export async function POST(req: NextRequest) {
           subscription_tier: ls.plan as string,
           subscription_status: 'active',
         } as Record<string, unknown>).eq('id', ls.user_id as string);
+
+        // Trigger NFSe for subscription payment
+        if ((inv.amount as number) > 0) {
+          requestSubscriptionNfse({
+            user_id: ls.user_id as string,
+            subscription_id: ls.id as string,
+            amount_cents: inv.amount as number,
+            source_type: 'pagarme',
+            source_id: inv.id as string,
+            description: `MyFitLife Pro - fatura PagarMe`,
+          }).catch((err: any) => console.error('NFSe from PagarMe failed:', err));
+        }
       }
     }
 

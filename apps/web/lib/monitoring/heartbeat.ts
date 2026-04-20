@@ -5,7 +5,8 @@ export type HeartbeatJob =
   | 'daily_cleanup'
   | 'nfse_queue'
   | 'pix_renewals'
-  | 'pix_check_payments';
+  | 'pix_check_payments'
+  | 'nfse_sub_queue';
 
 const URL_MAP: Record<HeartbeatJob, string | undefined> = {
   autopilot: process.env.HEARTBEAT_AUTOPILOT_URL,
@@ -15,6 +16,7 @@ const URL_MAP: Record<HeartbeatJob, string | undefined> = {
   nfse_queue: process.env.HEARTBEAT_NFSE_QUEUE_URL,
   pix_renewals: process.env.HEARTBEAT_PIX_RENEWALS_URL,
   pix_check_payments: process.env.HEARTBEAT_PIX_CHECK_PAYMENTS_URL,
+  nfse_sub_queue: process.env.HEARTBEAT_NFSE_SUB_QUEUE_URL,
 };
 
 export async function sendHeartbeat(

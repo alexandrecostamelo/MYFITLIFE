@@ -1,5 +1,6 @@
 import { createClient as createAdmin } from '@supabase/supabase-js';
 import { createPagarMePixCharge, getPagarMeChargeStatus } from '@/lib/pagarme';
+import { requestSubscriptionNfse } from '@/lib/nfse/subscription-issuer';
 
 function admin() {
   return createAdmin(
@@ -152,6 +153,16 @@ export async function checkPendingCharges(): Promise<{ checked: number; paid: nu
         const subId = (charge as Record<string, unknown>).subscription_id as string | null;
         if (subId) {
           await extendSubscription(subId, charge.user_id);
+
+          // Trigger NFSe for Pix renewal payment
+          requestSubscriptionNfse({
+            user_id: charge.user_id,
+            subscription_id: subId,
+            amount_cents: charge.amount_cents,
+            source_type: 'pix',
+            source_id: charge.id,
+            description: `MyFitLife Pro - renovação Pix`,
+          }).catch(() => null);
         }
         paid++;
       } else if (new Date(charge.expires_at) < new Date()) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { stripe } from '@/lib/stripe';
 import Stripe from 'stripe';
+import { requestSubscriptionNfse } from '@/lib/nfse/subscription-issuer';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -92,6 +93,29 @@ export async function POST(req: NextRequest) {
               : new Date().toISOString(),
             receipt_url: invoice.hosted_invoice_url,
           });
+
+          // Trigger NFSe for subscription payment
+          const stripeSubId = invoice.parent?.subscription_details?.subscription
+            || invoice.subscription;
+          if (stripeSubId && invoice.amount_paid > 0) {
+            const { data: localSub } = await sb
+              .from('subscriptions')
+              .select('id')
+              .eq('stripe_subscription_id', stripeSubId)
+              .maybeSingle();
+
+            if (localSub) {
+              const desc = invoice.lines?.data?.[0]?.description || 'MyFitLife Pro';
+              requestSubscriptionNfse({
+                user_id: userId,
+                subscription_id: localSub.id,
+                amount_cents: invoice.amount_paid,
+                source_type: 'stripe',
+                source_id: invoice.id,
+                description: desc,
+              }).catch((err: any) => console.error('NFSe from Stripe failed:', err));
+            }
+          }
         }
         break;
       }
