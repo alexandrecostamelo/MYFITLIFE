@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { OBJECTIVE_LABELS, DIFFICULTY_LABELS } from '@myfitlife/core/workout-sharing';
-import { ArrowLeft, Loader2, Plus, Globe, Lock, Copy, Dumbbell } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Globe, Lock, Copy, Dumbbell, Upload } from 'lucide-react';
 
 export default function WorkoutTemplatesPage() {
   const [templates, setTemplates] = useState<any[]>([]);
@@ -51,6 +51,9 @@ export default function WorkoutTemplatesPage() {
         <Link href="/app" className="rounded p-2 hover:bg-muted"><ArrowLeft className="h-5 w-5" /></Link>
         <h1 className="text-2xl font-bold">Meus treinos</h1>
         <div className="ml-auto flex gap-2">
+          <Link href="/app/workout/import">
+            <Button variant="outline" size="sm"><Upload className="mr-1 h-3 w-3" /> Importar</Button>
+          </Link>
           <Link href="/app/discover/workouts">
             <Button variant="outline" size="sm">Descobrir</Button>
           </Link>
