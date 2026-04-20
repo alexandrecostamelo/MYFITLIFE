@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, CheckCircle2, Star, Receipt, FileText, Smartphone } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle2, Star, Receipt, FileText, Smartphone, ArrowRightLeft } from 'lucide-react';
 
 const STATUS_LABEL: Record<string, string> = {
   active: 'Ativa',
@@ -58,7 +58,7 @@ function BillingContent() {
 
   if (loading) return <div className="p-6"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
-  const isPro = sub?.plan === 'pro' && sub?.status === 'active';
+  const isPro = (sub?.plan === 'pro' || sub?.plan === 'premium') && sub?.status === 'active';
 
   return (
     <main className="mx-auto max-w-xl p-4">
@@ -85,7 +85,7 @@ function BillingContent() {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm">—</div>
           )}
           <div>
-            <p className="font-bold">{isPro ? 'MyFitLife Pro' : 'Plano Gratuito'}</p>
+            <p className="font-bold">{isPro ? `MyFitLife ${sub?.plan === 'premium' ? 'Premium' : 'Pro'}` : 'Plano Gratuito'}</p>
             <p className={`text-sm ${STATUS_COLOR[sub?.status || 'free'] || 'text-muted-foreground'}`}>
               {STATUS_LABEL[sub?.status || 'free'] || sub?.status}
               {sub?.billing_cycle && ` · ${sub.billing_cycle === 'monthly' ? 'Mensal' : 'Anual'}`}
@@ -137,6 +137,14 @@ function BillingContent() {
               {cancelLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Cancelar assinatura'}
             </Button>
           </div>
+        )}
+
+        {isPro && (
+          <Button asChild variant="outline" className="w-full mt-2">
+            <Link href="/app/billing/change-plan">
+              <ArrowRightLeft className="mr-2 h-4 w-4" /> Mudar plano ou ciclo
+            </Link>
+          </Button>
         )}
 
         {!isPro && (

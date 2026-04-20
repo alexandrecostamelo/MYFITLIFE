@@ -8,6 +8,7 @@
     { "path": "/api/cron/video-rooms-cleanup", "schedule": "0 3 * * *" },
     { "path": "/api/cron/pix-renewals", "schedule": "0 11 * * *" },
     { "path": "/api/cron/pix-check-payments", "schedule": "0 */2 * * *" },
-    { "path": "/api/cron/nfse-subscriptions-queue", "schedule": "*/20 * * * *" }
+    { "path": "/api/cron/nfse-subscriptions-queue", "schedule": "*/20 * * * *" },
+    { "path": "/api/cron/apply-scheduled-changes", "schedule": "0 * * * *" }
   ]
 }
