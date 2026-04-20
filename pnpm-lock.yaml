@@ -53,6 +53,9 @@ importers:
       '@capacitor/status-bar':
         specifier: ^8.0.2
         version: 8.0.2(@capacitor/core@6.2.1)
+      '@capgo/capacitor-health':
+        specifier: ^8.4.7
+        version: 8.4.7(@capacitor/core@6.2.1)
       '@daily-co/daily-js':
         specifier: ^0.89.1
         version: 0.89.1
@@ -430,6 +433,11 @@ packages:
 
   '@capacitor/status-bar@8.0.2':
     resolution: {integrity: sha512-WXs8YB8B9eEaPZz+bcdY6t2nForF1FLoj/JU0Dl9RRgQnddnS98FEEyDooQhaY7wivr000j4+SC1FyeJkrFO7A==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-health@8.4.7':
+    resolution: {integrity: sha512-T/l2oJAF9cpyIsX2huDuEdus9SEaXCe+uZuagE9AoqwjtHZ+uPpuQ8OXdOJa3XqMznxybpENcpiLt1BG26aQgg==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -5144,6 +5152,10 @@ snapshots:
       '@capacitor/core': 6.2.1
 
   '@capacitor/status-bar@8.0.2(@capacitor/core@6.2.1)':
+    dependencies:
+      '@capacitor/core': 6.2.1
+
+  '@capgo/capacitor-health@8.4.7(@capacitor/core@6.2.1)':
     dependencies:
       '@capacitor/core': 6.2.1
 
