@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { AUTOPILOT_DAILY_SYSTEM, buildAutopilotContext } from '@myfitlife/ai/prompts/autopilot';
+import { buildSystemPrompt } from '@/lib/ai/personas';
 import { enforceRateLimit } from '@/lib/rate-limit/with-rate-limit';
 
 export const maxDuration = 60;
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ plan: existing });
   }
 
-  const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('full_name, coach_persona').eq('id', user.id).single();
   const { data: up } = await supabase
     .from('user_profiles')
     .select('*')
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
     const response = await anthropic.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: 2000,
-      system: AUTOPILOT_DAILY_SYSTEM,
+      system: buildSystemPrompt(String(profile?.coach_persona || 'leo'), AUTOPILOT_DAILY_SYSTEM),
       messages: [{ role: 'user', content: context }],
     });
 

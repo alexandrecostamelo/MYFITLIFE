@@ -9,11 +9,14 @@ import { CalendarHeatmap } from '@/components/ui/calendar-heatmap';
 import { Bell, ChevronRight, Check, Circle, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CoachAvatar } from '@/components/ui/coach-avatar';
+import { getPersona } from '@/lib/ai/personas';
 
 interface Props {
   name: string;
   avatar: string | null;
   tier: string;
+  coachPersona?: string;
   rings: { value: number; max: number; color: string; label: string }[];
   streak: number;
   monthSessions: number;
@@ -174,6 +177,24 @@ export function DashboardClient(props: Props) {
               <p className="text-xs text-muted-foreground">Autopilot gerou seu treino</p>
             </div>
             <ChevronRight className="h-5 w-5 text-accent" />
+          </div>
+        </Link>
+      )}
+
+      {/* Coach card */}
+      {props.coachPersona && (
+        <Link href="/app/coach">
+          <div className="glass-card p-4 flex items-center gap-3">
+            <CoachAvatar persona={props.coachPersona as 'leo' | 'sofia' | 'rafa'} size="md" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold">
+                {getPersona(props.coachPersona).name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {getPersona(props.coachPersona).tagline}
+              </p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
         </Link>
       )}

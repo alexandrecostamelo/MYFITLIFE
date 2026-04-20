@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { buildCoachSystemPrompt } from '@myfitlife/ai/prompts/coach';
+import { buildSystemPrompt } from '@/lib/ai/personas';
 import { getCachedResponse, setCachedResponse } from '@myfitlife/ai/cache';
 import { enforceRateLimit } from '@/lib/rate-limit/with-rate-limit';
 import { z } from 'zod';
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
   const parsed = bodySchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: 'invalid' }, { status: 400 });
 
-  const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('full_name, coach_persona').eq('id', user.id).single();
   const { data: up } = await supabase
     .from('user_profiles')
     .select('primary_goal, experience_level, coach_tone, target_calories, target_protein_g')
@@ -53,7 +54,8 @@ export async function POST(req: NextRequest) {
     .order('created_at', { ascending: true })
     .limit(50);
 
-  const systemPrompt = buildCoachSystemPrompt({
+  const personaId = String(profile?.coach_persona || 'leo');
+  const baseSystemPrompt = buildCoachSystemPrompt({
     userName: profile?.full_name?.split(' ')[0] || 'você',
     tone: (up?.coach_tone as any) || 'warm',
     goal: up?.primary_goal || 'general_health',
@@ -61,6 +63,7 @@ export async function POST(req: NextRequest) {
     targetCalories: up?.target_calories,
     targetProteinG: up?.target_protein_g,
   });
+  const systemPrompt = buildSystemPrompt(personaId, baseSystemPrompt);
 
   const bypassCache = parsed.data.no_cache === true;
   const isFirstMessage = (history || []).length === 1;

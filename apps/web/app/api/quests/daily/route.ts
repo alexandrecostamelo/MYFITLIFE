@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { DAILY_QUESTS_SYSTEM, buildQuestsContext } from '@myfitlife/ai/prompts/quests';
+import { buildSystemPrompt } from '@/lib/ai/personas';
 import { checkDailyLimit, logUsage } from '@/lib/rate-limit';
 
 export const maxDuration = 30;
@@ -23,7 +24,7 @@ export async function GET() {
   const limit = await checkDailyLimit(user.id, 'daily_quests', 3);
   if (!limit.allowed) return NextResponse.json({ quests: existing || [] });
 
-  const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('full_name, coach_persona').eq('id', user.id).single();
   const { data: up } = await supabase.from('user_profiles').select('primary_goal, experience_level').eq('user_id', user.id).single();
   const { data: stats } = await supabase.from('user_stats').select('level').eq('user_id', user.id).maybeSingle();
   const { data: activeTrail } = await supabase.from('user_trails').select('id').eq('user_id', user.id).is('completed_at', null).eq('abandoned', false).maybeSingle();
@@ -45,7 +46,8 @@ export async function GET() {
 
   const anthropic = getAnthropicClient();
   try {
-    const response = await anthropic.messages.create({ model: CLAUDE_MODEL, max_tokens: 800, system: DAILY_QUESTS_SYSTEM, messages: [{ role: 'user', content: context }] });
+    const personaId = String(profile?.coach_persona || 'leo');
+    const response = await anthropic.messages.create({ model: CLAUDE_MODEL, max_tokens: 800, system: buildSystemPrompt(personaId, DAILY_QUESTS_SYSTEM), messages: [{ role: 'user', content: context }] });
     const text = response.content.filter((c) => c.type === 'text').map((c) => ('text' in c ? c.text : '')).join('\n');
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return NextResponse.json({ error: 'ai_no_json' }, { status: 500 });

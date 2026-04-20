@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL } from '@myfitlife/ai/client';
 import { PROACTIVE_COACH_SYSTEM, buildProactiveContext } from '@myfitlife/ai/prompts/lab-extraction';
+import { buildSystemPrompt } from '@/lib/ai/personas';
 
 export const maxDuration = 60;
 
@@ -76,6 +77,8 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
   const triggers = await detectTriggers(supabase, user.id);
+  const { data: personaProfile } = await supabase.from('profiles').select('coach_persona').eq('id', user.id).single();
+  const personaId = String(personaProfile?.coach_persona || 'leo');
   const anthropic = getAnthropicClient();
   const createdMessages: string[] = [];
 
@@ -87,7 +90,7 @@ export async function POST() {
       const response = await anthropic.messages.create({
         model: CLAUDE_MODEL,
         max_tokens: 400,
-        system: PROACTIVE_COACH_SYSTEM,
+        system: buildSystemPrompt(personaId, PROACTIVE_COACH_SYSTEM),
         messages: [{ role: 'user', content: buildProactiveContext(trigger.type, trigger.data) }],
       });
 

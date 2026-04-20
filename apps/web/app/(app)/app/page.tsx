@@ -30,7 +30,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase
       .from('profiles')
-      .select('full_name, avatar_url, subscription_tier')
+      .select('full_name, avatar_url, subscription_tier, coach_persona')
       .eq('id', user.id)
       .single(),
     supabase
@@ -132,6 +132,7 @@ export default async function DashboardPage() {
       todo={todo}
       currentWeight={weightRec?.weight_kg ? Number(weightRec.weight_kg) : undefined}
       workoutTitle={planRec?.workout_suggestion ? 'Treino do dia pronto' : undefined}
+      coachPersona={String(profileRec?.coach_persona || 'leo')}
     />
   );
 }

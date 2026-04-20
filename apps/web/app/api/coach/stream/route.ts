@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAnthropicClient, CLAUDE_MODEL, CLAUDE_FALLBACK_MODEL, estimateCost } from '@myfitlife/ai/client';
 import { COACH_SYSTEM } from '@myfitlife/ai/prompts/coach';
+import { buildSystemPrompt } from '@/lib/ai/personas';
 import { checkAndIncrementLimit } from '@/lib/rate-limit-v2';
 import { checkPromptSafety } from '@/lib/prompt-safety';
 import { buildRichCoachContext } from '@/lib/coach-context';
@@ -36,6 +37,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  const { data: coachProfile } = await supabase.from('profiles').select('coach_persona').eq('id', user.id).single();
+  const personaId = String(coachProfile?.coach_persona || 'leo');
   const richContext = await buildRichCoachContext(supabase, user.id);
 
   const messages = (history || []).slice(-10).map((m: any) => ({
@@ -60,7 +63,7 @@ export async function POST(req: NextRequest) {
           const response = anthropic.messages.stream({
             model,
             max_tokens: 1200,
-            system: COACH_SYSTEM + '\n\n' + richContext,
+            system: buildSystemPrompt(personaId, COACH_SYSTEM + '\n\n' + richContext),
             messages,
           });
 
