@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_meal">Registrar Refeição</string>
+    <string name="shortcut_workout">Iniciar Treino</string>
+    <string name="shortcut_checkin">Check-in Matinal</string>
+    <string name="shortcut_coach">Falar com Coach</string>
+    <string name="shortcut_readiness">Ver Readiness</string>
+</resources>

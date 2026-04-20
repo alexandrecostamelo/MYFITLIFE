@@ -24,6 +24,12 @@ export function parseDeepLink(url: string): DeepLinkRoute {
         '/profile': '/app/profile',
         '/plans': '/app/plans',
         '/billing': '/app/billing',
+        '/nutrition': '/app/nutrition',
+        '/checkin': '/app/checkin',
+        '/coach': '/app/coach',
+        '/readiness': '/app/health/readiness',
+        '/recipes': '/app/nutrition/recipes',
+        '/goals': '/app/goals',
       };
       const route = routeMap[path] ?? `/app${path}`;
       return { type: 'app', path: route };

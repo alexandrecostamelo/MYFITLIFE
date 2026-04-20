@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <capability android:name="actions.intent.OPEN_APP_FEATURE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.myfitlife.app"
+            android:targetClass="com.myfitlife.app.MainActivity">
+            <parameter android:name="feature" android:key="feature" />
+        </intent>
+    </capability>
+
+    <shortcut
+        android:shortcutId="log_meal"
+        android:shortcutShortLabel="@string/shortcut_meal"
+        android:icon="@mipmap/ic_launcher">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="myfitlife:///app/nutrition" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="registrar refeição" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="start_workout"
+        android:shortcutShortLabel="@string/shortcut_workout"
+        android:icon="@mipmap/ic_launcher">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="myfitlife:///app/workouts/run" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="iniciar treino" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="checkin"
+        android:shortcutShortLabel="@string/shortcut_checkin"
+        android:icon="@mipmap/ic_launcher">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="myfitlife:///app/checkin" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="check-in matinal" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="coach"
+        android:shortcutShortLabel="@string/shortcut_coach"
+        android:icon="@mipmap/ic_launcher">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="myfitlife:///app/coach" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="falar com coach" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="readiness"
+        android:shortcutShortLabel="@string/shortcut_readiness"
+        android:icon="@mipmap/ic_launcher">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="myfitlife:///app/health/readiness" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="ver readiness" />
+        </capability-binding>
+    </shortcut>
+</shortcuts>
