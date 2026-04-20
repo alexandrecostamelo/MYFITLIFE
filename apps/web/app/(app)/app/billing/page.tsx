@@ -33,7 +33,6 @@ function BillingContent() {
   const [pendingPix, setPendingPix] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -102,7 +101,7 @@ function BillingContent() {
 
         {isPro && sub?.provider === 'stripe' && (
           <Button onClick={openStripePortal} disabled={portalLoading} variant="outline" className="w-full">
-            {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Gerenciar cartão e cancelar'}
+            {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Gerenciar cartão (Stripe)'}
           </Button>
         )}
 
@@ -120,23 +119,13 @@ function BillingContent() {
                 </Button>
               </a>
             )}
-            <Button
-              variant="destructive"
-              className="w-full"
-              disabled={cancelLoading}
-              onClick={async () => {
-                if (!confirm('Tem certeza que deseja cancelar sua assinatura?')) return;
-                setCancelLoading(true);
-                const res = await fetch('/api/billing/pagarme/cancel', { method: 'POST' });
-                if (res.ok) {
-                  setSub((s: any) => ({ ...s, status: 'canceled' }));
-                }
-                setCancelLoading(false);
-              }}
-            >
-              {cancelLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Cancelar assinatura'}
-            </Button>
           </div>
+        )}
+
+        {isPro && (
+          <Button asChild variant="outline" className="w-full mt-2 text-destructive hover:text-destructive">
+            <Link href="/app/billing/cancel">Cancelar assinatura</Link>
+          </Button>
         )}
 
         {isPro && (
