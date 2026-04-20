@@ -1,6 +1,25 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter, JetBrains_Mono, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-mono',
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-display',
+});
 
 export const metadata: Metadata = {
   title: 'MyFitLife',
@@ -21,7 +40,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#1F4E79',
+  themeColor: '#0A0A0A',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -38,10 +57,10 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{
-          __html: `(function(){try{var t=localStorage.getItem('myfitlife-theme')||'system';var d=t==='system'?window.matchMedia('(prefers-color-scheme: dark)').matches:t==='dark';if(d)document.documentElement.classList.add('dark');}catch(e){}})();`,
+          __html: `(function(){try{var t=localStorage.getItem('myfitlife-theme')||'system';var l=t==='light'||(t==='system'&&!window.matchMedia('(prefers-color-scheme: dark)').matches);if(l)document.documentElement.classList.add('light');else document.documentElement.classList.add('dark');}catch(e){}})();`,
         }} />
       </head>
-      <body>
+      <body className={`${inter.variable} ${jetbrains.variable} ${bricolage.variable} font-sans antialiased`}>
         <ThemeProvider>
           {children}
         </ThemeProvider>

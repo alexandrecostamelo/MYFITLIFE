@@ -4,56 +4,119 @@
 
 @layer base {
   :root {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --surface: 0 0% 8%;
+    --surface-elevated: 0 0% 11%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 63%;
+    --accent: 160 100% 43%;
+    --accent-foreground: 0 0% 4%;
+    --accent-muted: 160 100% 43% / 0.15;
+    --destructive: 0 72% 68%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.08;
+    --ring: 160 100% 43%;
+    --radius: 0.75rem;
+    --chart-1: 160 100% 43%;
+    --chart-2: 45 100% 60%;
+    --chart-3: 200 80% 55%;
+    --chart-4: 280 70% 60%;
+    --chart-5: 20 90% 55%;
+    color-scheme: dark;
+  }
+
+  .light {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 0% 4%;
+    --surface: 0 0% 96%;
+    --surface-elevated: 0 0% 100%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 211 58% 30%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 211 58% 30%;
-    --radius: 0.5rem;
+    --popover-foreground: 0 0% 4%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 160 100% 35%;
+    --accent-foreground: 0 0% 100%;
+    --accent-muted: 160 100% 35% / 0.1;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 0% / 0.08;
+    --input: 0 0% 0% / 0.08;
+    --ring: 160 100% 35%;
+    color-scheme: light;
   }
 
-  .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 70% 60%;
-    --primary-foreground: 222 47% 6%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 210 70% 60%;
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::selection {
+    background: hsl(160 100% 43% / 0.3);
+    color: hsl(0 0% 98%);
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply rounded-2xl border backdrop-blur-sm;
+    background: hsl(var(--surface) / 0.6);
+    border-color: hsl(var(--border));
+  }
+
+  .glass-card-elevated {
+    @apply rounded-2xl border backdrop-blur-md;
+    background: hsl(var(--surface-elevated) / 0.7);
+    border-color: hsl(var(--border));
+  }
+
+  .metric-number {
+    @apply font-mono text-4xl font-light tracking-tight;
+  }
+
+  .metric-label {
+    @apply text-[10px] font-semibold uppercase tracking-widest text-muted-foreground;
+  }
+
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+
+  .display-title {
+    @apply font-display text-3xl font-bold tracking-tight;
+  }
+
+  .accent-glow {
+    box-shadow: 0 0 20px hsl(160 100% 43% / 0.15);
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors;
+    background: hsl(var(--accent-muted));
+    color: hsl(var(--accent));
+  }
+
+  .chip-active {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
   }
 }
