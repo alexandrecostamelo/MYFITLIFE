@@ -138,4 +138,6 @@ Videoconferência: `DAILY_API_KEY` (Daily.co para salas de vídeo)
 
 Chromecast: `NEXT_PUBLIC_CAST_APP_ID` (Google Cast receiver app ID)
 
+Crypto: `TOKEN_ENCRYPTION_KEY` (AES-256-GCM para tokens de wearable — gere com `openssl rand -hex 32`)
+
 Payments: `STRIPE_SECRET_KEY`, `PAGARME_API_KEY`

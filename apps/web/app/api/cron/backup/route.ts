@@ -72,6 +72,16 @@ export async function GET(req: NextRequest) {
     'body_compositions',
     'goals',
     'subscriptions',
+    'health_samples',
+    'readiness_scores',
+    'achievements',
+    'user_achievements',
+    'xp_events',
+    'friendships',
+    'wearable_connections',
+    'nfse_invoices',
+    'payment_transactions',
+    'coach_messages',
   ];
 
   const backup: Record<string, unknown[]> = {};

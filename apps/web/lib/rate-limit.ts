@@ -6,7 +6,7 @@ export async function checkDailyLimit(userId: string, feature: string, maxPerDay
   startOfDay.setHours(0, 0, 0, 0);
 
   const { count } = await supabase
-    .from('ai_usage_logs')
+    .from('ai_usage_log')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
     .eq('feature', feature)
@@ -22,7 +22,7 @@ export async function checkDailyLimit(userId: string, feature: string, maxPerDay
 
 export async function logUsage(userId: string, feature: string, costUnits = 1) {
   const supabase = await createClient();
-  await supabase.from('ai_usage_logs').insert({
+  await supabase.from('ai_usage_log').insert({
     user_id: userId,
     feature,
     cost_units: costUnits,

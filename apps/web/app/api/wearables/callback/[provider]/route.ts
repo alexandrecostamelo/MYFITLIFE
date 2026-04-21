@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
 import { PROVIDERS } from '@/lib/wearables/providers';
+import { encrypt } from '@/lib/crypto/envelope';
 
 export const runtime = 'nodejs';
 
@@ -48,8 +49,8 @@ export async function GET(
       {
         user_id: userId,
         provider: providerId,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || null,
+        access_token: encrypt(tokens.access_token),
+        refresh_token: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
         token_expires_at: tokens.expires_in
           ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
           : null,

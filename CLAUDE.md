@@ -81,6 +81,13 @@ const name = String(data?.field ?? '');
 const hasFlag = !!data?.flag;
 ```
 
+## Tabelas — escopo
+
+- `profiles` — dados de auth/identidade: email, full_name, gender, birth_date, avatar, subscription_tier, cached_*_score
+- `user_profiles` — perfil fitness/nutrição: height, weight, goals, diet, equipment, experience_level, coach_tone
+- Ambas são canônicas. `profiles.id` = `auth.users.id`, `user_profiles.user_id` = `auth.users.id`
+- `ai_usage_log` — tabela única de rate limiting AI (singular, sem 's')
+
 ## Git
 
 - Commits em português, estilo convencional: `feat:`, `fix:`, `test:`, `chore:`
