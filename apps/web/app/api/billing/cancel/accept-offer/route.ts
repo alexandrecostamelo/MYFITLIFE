@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
+import { acceptOfferSchema } from '@/lib/billing/schemas';
 
 export const runtime = 'nodejs';
 
@@ -11,7 +12,11 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const { attempt_id, offer_type } = await req.json();
+  const parsed = acceptOfferSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'validation_error', details: parsed.error.flatten() }, { status: 400 });
+  }
+  const { attempt_id, offer_type } = parsed.data;
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

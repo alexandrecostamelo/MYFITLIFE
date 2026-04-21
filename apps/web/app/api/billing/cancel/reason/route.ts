@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
 import { pickOffer } from '@/lib/billing/retention-offers';
+import { cancelReasonSchema } from '@/lib/billing/schemas';
 
 export const runtime = 'nodejs';
 
@@ -12,8 +13,11 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const { attempt_id, reason, details } = await req.json();
-  if (!attempt_id || !reason) return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
+  const parsed = cancelReasonSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'validation_error', details: parsed.error.flatten() }, { status: 400 });
+  }
+  const { attempt_id, reason, details } = parsed.data;
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

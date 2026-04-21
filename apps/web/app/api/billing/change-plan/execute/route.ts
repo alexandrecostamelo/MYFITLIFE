@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
 import { PLANS, planKey, classifyChange, shouldApplyImmediate } from '@/lib/billing/plans';
 import { calculateProration } from '@/lib/billing/proration';
+import { changePlanSchema } from '@/lib/billing/schemas';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -14,8 +15,11 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const { to_tier, to_cycle } = await req.json();
-  if (!to_tier || !to_cycle) return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
+  const parsed = changePlanSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'validation_error', details: parsed.error.flatten() }, { status: 400 });
+  }
+  const { to_tier, to_cycle } = parsed.data;
 
   const targetKey = planKey(to_tier, to_cycle);
   if (!PLANS[targetKey]) return NextResponse.json({ error: 'invalid_plan' }, { status: 400 });

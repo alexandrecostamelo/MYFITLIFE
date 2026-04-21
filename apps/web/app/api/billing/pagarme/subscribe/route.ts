@@ -7,6 +7,7 @@ import {
   createCreditCardSubscription,
   createBoletoSubscription,
 } from '@/lib/pagarme';
+import { pagarmeSubscribeSchema } from '@/lib/billing/schemas';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -23,14 +24,11 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const body = await req.json();
-  const { plan, method, card_token, customer, billing_address } = body as {
-    plan: string;
-    method: 'credit_card' | 'boleto';
-    card_token?: string;
-    customer: { name: string; document: string; document_type: 'CPF' | 'CNPJ'; phone?: any };
-    billing_address?: Record<string, unknown>;
-  };
+  const parsed = pagarmeSubscribeSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'validation_error', details: parsed.error.flatten() }, { status: 400 });
+  }
+  const { plan, method, card_token, customer, billing_address } = parsed.data;
 
   const planId = PLAN_IDS[plan];
   if (!planId) return NextResponse.json({ error: 'invalid_plan' }, { status: 400 });
