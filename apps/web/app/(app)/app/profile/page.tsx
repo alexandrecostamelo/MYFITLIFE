@@ -141,10 +141,10 @@ export default function ProfilePage() {
           </Link>
         ) : null}
         {profile?.role === 'platform_admin' ? (
-          <Link href="/app/admin/claims" className="flex items-center justify-between p-4 hover:bg-slate-50">
+          <Link href="/app/admin" className="flex items-center justify-between p-4 hover:bg-slate-50">
             <div className="flex items-center gap-3">
               <Building2 className="h-4 w-4 text-amber-500" />
-              <span className="text-sm text-amber-700">Gerenciar solicitações</span>
+              <span className="text-sm text-amber-700">Painel Admin</span>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Link>
