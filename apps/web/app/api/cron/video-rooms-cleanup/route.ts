@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { deleteDailyRoom } from '@/lib/daily';
+import { withHeartbeat } from '@/lib/monitoring/heartbeat';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -11,6 +12,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  return withHeartbeat('video_rooms_cleanup', async () => {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -42,4 +44,5 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, deleted, ran_at: new Date().toISOString() });
+  }); // withHeartbeat
 }

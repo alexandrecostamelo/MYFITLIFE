@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
+import { sendEmail } from '@/lib/email/render';
+import { withHeartbeat } from '@/lib/monitoring/heartbeat';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,6 +12,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  return withHeartbeat('winback_email', async () => {
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -29,7 +32,6 @@ export async function GET(req: NextRequest) {
     .limit(100);
 
   let sent = 0;
-  const RESEND_KEY = process.env.RESEND_API_KEY;
 
   for (const row of (canceled || []) as Record<string, unknown>[]) {
     const { data: profile } = await admin
@@ -39,43 +41,22 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
 
     const profileRec = profile as Record<string, unknown> | null;
-    if (!profileRec?.email || !RESEND_KEY) continue;
+    if (!profileRec?.email || !process.env.RESEND_API_KEY) continue;
 
-    const firstName = String(profileRec.full_name || 'treineiro').split(' ')[0];
+    const name = String(profileRec.full_name || 'treineiro');
     const tierLabel =
       row.plan_tier_at_attempt === 'premium' ? 'Premium' : 'Pro';
 
-    const html = `
-      <div style="font-family: system-ui; max-width: 500px; padding: 24px;">
-        <h1>Sentimos sua falta, ${firstName}</h1>
-        <p>Faz uma semana que você cancelou o MyFitLife ${tierLabel}. Queremos fazer uma oferta final:</p>
-        <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 0;"><strong>30% de desconto por 3 meses</strong> se voltar agora.</p>
-          <p style="margin: 8px 0 0 0; color: #666; font-size: 14px;">Pro Mensal sai por R$ 20,93 em vez de R$ 29,90.</p>
-        </div>
-        <p>
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://myfitlife.app'}/app/plans?winback=${row.id}" style="background: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block;">
-            Voltar com desconto
-          </a>
-        </p>
-        <p style="color: #666; font-size: 12px; margin-top: 32px;">
-          Oferta válida por 72h. Não vamos insistir mais depois disso.
-        </p>
-      </div>
-    `;
-
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_KEY}`,
-        'Content-Type': 'application/json',
+    await sendEmail({
+      to: profileRec.email as string,
+      template: 'win-back',
+      props: {
+        name,
+        tierLabel,
+        discountPct: 30,
+        discountMonths: 3,
+        winbackId: row.id,
       },
-      body: JSON.stringify({
-        from: 'MyFitLife <team@myfitlife.app>',
-        to: profileRec.email,
-        subject: `${firstName}, uma última oferta de 30% off`,
-        html,
-      }),
     }).catch(() => null);
 
     await admin
@@ -87,4 +68,5 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ sent });
+  }); // withHeartbeat
 }

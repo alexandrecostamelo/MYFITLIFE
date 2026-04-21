@@ -1,5 +1,6 @@
 import { createClient as createAdmin } from '@supabase/supabase-js';
 import { sendPushToUser } from '@/lib/push';
+import { sendEmail } from '@/lib/email/render';
 
 function admin() {
   return createAdmin(
@@ -113,8 +114,7 @@ export async function sendRenewalNotifications(): Promise<{ sent: number; skippe
 }
 
 async function sendRenewalEmail(userId: string, urgency: UrgencyLevel, daysUntilExpiry: number) {
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) return;
+  if (!process.env.RESEND_API_KEY) return;
 
   const supa = admin();
   const { data: profile } = await supa
@@ -126,7 +126,7 @@ async function sendRenewalEmail(userId: string, urgency: UrgencyLevel, daysUntil
   const email = (profile as Record<string, unknown> | null)?.email as string | null;
   if (!email) return;
 
-  const name = String((profile as Record<string, unknown> | null)?.full_name || '').split(' ')[0] || 'treineiro';
+  const name = String((profile as Record<string, unknown> | null)?.full_name || '');
 
   const { data: charge } = await supa
     .from('pix_charges')
@@ -149,39 +149,16 @@ async function sendRenewalEmail(userId: string, urgency: UrgencyLevel, daysUntil
         ? `MyFitLife vence em ${daysUntilExpiry} dias`
         : 'Renove seu MyFitLife Pro';
 
-  const html = `
-    <div style="font-family: system-ui, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px;">
-      <h1 style="color: #111;">Oi ${name}!</h1>
-      <p>Sua assinatura Pro vence em <strong>${daysUntilExpiry} dia${daysUntilExpiry !== 1 ? 's' : ''}</strong>.</p>
-      ${qrCode ? `
-        <p>Pague R$ ${(amountCents / 100).toFixed(2).replace('.', ',')} via Pix pra renovar:</p>
-        <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; font-family: monospace; word-break: break-all; font-size: 12px;">
-          ${qrCode}
-        </div>
-      ` : '<p>Entre no app pra gerar seu QR Pix de renovação.</p>'}
-      <p style="margin-top: 16px;">
-        <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://myfitlife.app'}/app/billing"
-           style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-          Ver no app
-        </a>
-      </p>
-      <p style="color: #666; font-size: 12px; margin-top: 32px;">
-        Não quer se preocupar com renovação? Troque pra cartão em /app/billing.
-      </p>
-    </div>
-  `;
-
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      'Content-Type': 'application/json',
+  await sendEmail({
+    to: email,
+    template: 'renewal-reminder',
+    props: {
+      name,
+      daysUntil: daysUntilExpiry,
+      urgency,
+      qrCode,
+      amountCents,
     },
-    body: JSON.stringify({
-      from: 'MyFitLife <noreply@myfitlife.app>',
-      to: email,
-      subject,
-      html,
-    }),
+    subject,
   });
 }

@@ -12,8 +12,14 @@ export function isCastAvailable(): boolean {
   );
 }
 
-export function initCast(receiverAppId: string): void {
+export function initCast(): void {
   if (!isCastAvailable()) return;
+
+  const receiverAppId = process.env.NEXT_PUBLIC_CAST_APP_ID;
+  if (!receiverAppId) {
+    console.warn('[cast] NEXT_PUBLIC_CAST_APP_ID not set');
+    return;
+  }
 
   const chrome = (window as any).chrome;
   const sessionRequest = new chrome.cast.SessionRequest(receiverAppId);

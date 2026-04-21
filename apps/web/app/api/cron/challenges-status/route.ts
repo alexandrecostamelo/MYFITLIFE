@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { withHeartbeat } from '@/lib/monitoring/heartbeat';
 
 export async function GET(req: NextRequest) {
   const auth = req.headers.get('authorization');
@@ -7,16 +8,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  return withHeartbeat('challenges_status', async () => {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
-  const { error } = await supabase.rpc('update_challenge_statuses');
-  if (error) {
-    console.error('[cron/challenges-status]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+    const { error } = await supabase.rpc('update_challenge_statuses');
+    if (error) {
+      console.error('[cron/challenges-status]', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-  return NextResponse.json({ ok: true, ran_at: new Date().toISOString() });
+    return NextResponse.json({ ok: true, ran_at: new Date().toISOString() });
+  });
 }

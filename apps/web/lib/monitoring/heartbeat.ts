@@ -7,7 +7,14 @@ export type HeartbeatJob =
   | 'pix_renewals'
   | 'pix_check_payments'
   | 'nfse_sub_queue'
-  | 'premium_quota_reset';
+  | 'premium_quota_reset'
+  | 'backup'
+  | 'wearable_sync'
+  | 'winback_email'
+  | 'unpause_subscriptions'
+  | 'apply_scheduled_changes'
+  | 'challenges_status'
+  | 'video_rooms_cleanup';
 
 const URL_MAP: Record<HeartbeatJob, string | undefined> = {
   autopilot: process.env.HEARTBEAT_AUTOPILOT_URL,
@@ -19,6 +26,13 @@ const URL_MAP: Record<HeartbeatJob, string | undefined> = {
   pix_check_payments: process.env.HEARTBEAT_PIX_CHECK_PAYMENTS_URL,
   nfse_sub_queue: process.env.HEARTBEAT_NFSE_SUB_QUEUE_URL,
   premium_quota_reset: process.env.HEARTBEAT_PREMIUM_QUOTA_RESET_URL,
+  backup: process.env.HEARTBEAT_BACKUP_URL,
+  wearable_sync: process.env.HEARTBEAT_WEARABLE_SYNC_URL,
+  winback_email: process.env.HEARTBEAT_WINBACK_EMAIL_URL,
+  unpause_subscriptions: process.env.HEARTBEAT_UNPAUSE_SUBSCRIPTIONS_URL,
+  apply_scheduled_changes: process.env.HEARTBEAT_APPLY_SCHEDULED_CHANGES_URL,
+  challenges_status: process.env.HEARTBEAT_CHALLENGES_STATUS_URL,
+  video_rooms_cleanup: process.env.HEARTBEAT_VIDEO_ROOMS_CLEANUP_URL,
 };
 
 export async function sendHeartbeat(

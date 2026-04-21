@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient as createAdmin } from '@supabase/supabase-js';
+import { withHeartbeat } from '@/lib/monitoring/heartbeat';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,6 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  return withHeartbeat('unpause_subscriptions', async () => {
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -52,4 +54,5 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ unpaused });
+  }); // withHeartbeat
 }

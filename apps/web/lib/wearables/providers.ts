@@ -298,6 +298,9 @@ export const WHOOP: WearableProvider = {
 
 // ---------------------------------------------------------------------------
 // Garmin (OAuth 1.0a — placeholder, full impl requires oauth1 lib)
+// TODO: Implementar OAuth 1.0a com lib como 'oauth-1.0a'.
+// TODO: Garmin usa Push API (webhooks) para dados — implementar endpoint receiver.
+// TODO: Registrar app em https://developerportal.garmin.com
 // ---------------------------------------------------------------------------
 
 export const GARMIN: WearableProvider = {
@@ -305,29 +308,31 @@ export const GARMIN: WearableProvider = {
   name: 'Garmin',
 
   authUrl(state, redirectUri) {
-    // Garmin uses OAuth 1.0a — full implementation requires an oauth1 signing library.
-    // Placeholder: redirect to Garmin Connect with callback.
+    // TODO: OAuth 1.0a requer request token → authorize → access token flow
     return `https://connect.garmin.com/oauthConfirm?oauth_callback=${encodeURIComponent(redirectUri)}&state=${state}`;
   },
 
   async exchangeCode(code) {
-    // OAuth 1.0a token exchange — placeholder
+    // TODO: Implementar OAuth 1.0a token exchange com signing
     return { access_token: code };
   },
 
   async refreshToken() {
-    // Garmin OAuth 1.0a tokens don't expire the same way
+    // TODO: Garmin OAuth 1.0a tokens não expiram — implementar reauth se revogado
     return { access_token: '', expires_in: 0 };
   },
 
   async fetchData() {
-    // Garmin Push API sends data via webhooks — polling placeholder
+    // TODO: Implementar recebimento via Garmin Health API Push (webhooks)
     return [];
   },
 };
 
 // ---------------------------------------------------------------------------
 // Mi Band / Zepp
+// TODO: API Zepp não é totalmente pública — verificar acesso developer.
+// TODO: Implementar fetchData() com endpoints de sleep, activity, heart_rate.
+// TODO: Testar fluxo OAuth com conta Zepp real.
 // ---------------------------------------------------------------------------
 
 export const MI_BAND: WearableProvider = {
@@ -380,7 +385,7 @@ export const MI_BAND: WearableProvider = {
   },
 
   async fetchData() {
-    // Zepp API data fetching — placeholder (API not fully public)
+    // TODO: Implementar fetching de dados Zepp (sleep, activity, heart_rate)
     return [];
   },
 };
