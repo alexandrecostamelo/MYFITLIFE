@@ -19,6 +19,11 @@ interface Props {
   initialRecipes: Record<string, unknown>[];
   regions: string[];
   diets: string[];
+  page?: number;
+  totalPages?: number;
+  serverRegion?: string;
+  serverDiet?: string;
+  serverQuery?: string;
 }
 
 const REGION_LABELS: Record<string, string> = {
@@ -53,28 +58,52 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   dificil: 'text-red-400',
 };
 
-export function RecipesClient({ initialRecipes, regions, diets }: Props) {
-  const [search, setSearch] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
-  const [selectedDiet, setSelectedDiet] = useState<string | null>(null);
+export function RecipesClient({
+  initialRecipes,
+  regions,
+  diets,
+  page = 1,
+  totalPages = 1,
+  serverRegion,
+  serverDiet,
+  serverQuery,
+}: Props) {
+  const [search, setSearch] = useState(serverQuery || '');
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(
+    serverRegion || null,
+  );
+  const [selectedDiet, setSelectedDiet] = useState<string | null>(
+    serverDiet || null,
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Client-side filtering within the current page results
   const filtered = useMemo(() => {
     return initialRecipes.filter((r) => {
-      if (search) {
+      // Only apply client-side search filtering when search differs from server query
+      if (search && search !== serverQuery) {
         const title = String(r.title || '').toLowerCase();
         const desc = String(r.description || '').toLowerCase();
         const q = search.toLowerCase();
         if (!title.includes(q) && !desc.includes(q)) return false;
       }
-      if (selectedRegion && String(r.region) !== selectedRegion) return false;
-      if (selectedDiet) {
-        const dietArr = Array.isArray(r.diet) ? r.diet.map(String) : [];
-        if (!dietArr.includes(selectedDiet)) return false;
-      }
       return true;
     });
-  }, [initialRecipes, search, selectedRegion, selectedDiet]);
+  }, [initialRecipes, search, serverQuery]);
+
+  const buildHref = (overrides: Record<string, string | undefined>) => {
+    const p: Record<string, string> = {};
+    const region = overrides.region !== undefined ? overrides.region : selectedRegion;
+    const diet = overrides.diet !== undefined ? overrides.diet : selectedDiet;
+    const q = overrides.q !== undefined ? overrides.q : search;
+    const pg = overrides.page || '1';
+    if (region) p.region = region;
+    if (diet) p.diet = diet;
+    if (q) p.q = q;
+    if (pg !== '1') p.page = pg;
+    const qs = new URLSearchParams(p).toString();
+    return `/app/nutrition/recipes${qs ? `?${qs}` : ''}`;
+  };
 
   const clearFilters = () => {
     setSearch('');
@@ -104,11 +133,10 @@ export function RecipesClient({ initialRecipes, regions, diets }: Props) {
         <p className="text-xs text-muted-foreground font-medium">Região</p>
         <div className="flex flex-wrap gap-1.5">
           {regions.map((r) => (
-            <button
+            <Link
               key={r}
-              onClick={() =>
-                setSelectedRegion(selectedRegion === r ? null : r)
-              }
+              href={buildHref({ region: selectedRegion === r ? undefined : r })}
+              onClick={() => setSelectedRegion(selectedRegion === r ? null : r)}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 selectedRegion === r
                   ? 'bg-accent text-black'
@@ -116,7 +144,7 @@ export function RecipesClient({ initialRecipes, regions, diets }: Props) {
               }`}
             >
               {REGION_LABELS[r] || r}
-            </button>
+            </Link>
           ))}
         </div>
       </div>
@@ -126,11 +154,10 @@ export function RecipesClient({ initialRecipes, regions, diets }: Props) {
         <p className="text-xs text-muted-foreground font-medium">Dieta</p>
         <div className="flex flex-wrap gap-1.5">
           {diets.map((d) => (
-            <button
+            <Link
               key={d}
-              onClick={() =>
-                setSelectedDiet(selectedDiet === d ? null : d)
-              }
+              href={buildHref({ diet: selectedDiet === d ? undefined : d })}
+              onClick={() => setSelectedDiet(selectedDiet === d ? null : d)}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 selectedDiet === d
                   ? 'bg-accent text-black'
@@ -138,7 +165,7 @@ export function RecipesClient({ initialRecipes, regions, diets }: Props) {
               }`}
             >
               {DIET_LABELS[d] || d}
-            </button>
+            </Link>
           ))}
         </div>
       </div>
@@ -356,6 +383,29 @@ export function RecipesClient({ initialRecipes, regions, diets }: Props) {
             Limpar filtros
           </Button>
         </section>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-3 pt-4">
+          {page > 1 && (
+            <Link href={buildHref({ page: String(page - 1) })}>
+              <Button size="sm" variant="outline">
+                Anterior
+              </Button>
+            </Link>
+          )}
+          <span className="text-sm text-muted-foreground">
+            {page}/{totalPages}
+          </span>
+          {page < totalPages && (
+            <Link href={buildHref({ page: String(page + 1) })}>
+              <Button size="sm" variant="outline">
+                Próximo
+              </Button>
+            </Link>
+          )}
+        </div>
       )}
     </main>
   );

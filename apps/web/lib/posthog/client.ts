@@ -13,7 +13,19 @@ export function initPostHog() {
     person_profiles: 'identified_only',
     capture_pageview: false,
     capture_pageleave: true,
-    autocapture: true,
+    autocapture: {
+      dom_event_allowlist: ['click', 'submit'],
+      element_allowlist: [
+        'a',
+        'button',
+        'form',
+        'input',
+        'select',
+        'textarea',
+      ],
+      css_selector_allowlist: ['[data-ph-capture]'],
+    },
+    capture_dead_clicks: false,
     session_recording: {
       maskAllInputs: true,
       maskTextSelector: '[data-mask]',

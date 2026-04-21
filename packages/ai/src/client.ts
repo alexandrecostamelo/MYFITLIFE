@@ -14,12 +14,23 @@ export function getAnthropicClient(): Anthropic {
   return _client;
 }
 
+type UsageInfo = {
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  feature: string;
+  user_id: string;
+};
+
 type CallOptions = {
   model?: string;
   max_tokens: number;
   system: string;
   messages: Array<{ role: 'user' | 'assistant'; content: any }>;
   temperature?: number;
+  feature?: string;
+  userId?: string;
+  onUsage?: (usage: UsageInfo) => void;
 };
 
 export type CallResult = {
@@ -50,6 +61,16 @@ export async function callWithRetry(opts: CallOptions): Promise<CallResult> {
       .map((c) => ('text' in c ? c.text : ''))
       .join('\n');
 
+    if (opts.onUsage) {
+      opts.onUsage({
+        model: primaryModel,
+        input_tokens: response.usage.input_tokens,
+        output_tokens: response.usage.output_tokens,
+        feature: opts.feature || 'unknown',
+        user_id: opts.userId || 'system',
+      });
+    }
+
     return {
       text,
       model_used: primaryModel,
@@ -79,6 +100,16 @@ export async function callWithRetry(opts: CallOptions): Promise<CallResult> {
         .filter((c) => c.type === 'text')
         .map((c) => ('text' in c ? c.text : ''))
         .join('\n');
+
+      if (opts.onUsage) {
+        opts.onUsage({
+          model: CLAUDE_FALLBACK_MODEL,
+          input_tokens: response.usage.input_tokens,
+          output_tokens: response.usage.output_tokens,
+          feature: opts.feature || 'unknown',
+          user_id: opts.userId || 'system',
+        });
+      }
 
       return {
         text,

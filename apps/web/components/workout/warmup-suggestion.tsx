@@ -8,6 +8,8 @@ import {
   ChevronUp,
   Play,
   SkipForward,
+  Loader2,
+  Sparkles,
 } from 'lucide-react';
 
 interface WarmupExercise {
@@ -18,6 +20,7 @@ interface WarmupExercise {
 
 interface Props {
   exercises?: WarmupExercise[];
+  exerciseNames?: string[];
   onStart: () => void;
   onSkip: () => void;
   workoutType?: string;
@@ -56,15 +59,41 @@ const DEFAULT_WARMUPS: Record<string, WarmupExercise[]> = {
 
 export function WarmupSuggestion({
   exercises,
+  exerciseNames,
   onStart,
   onSkip,
   workoutType = 'full',
 }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [aiWarmup, setAiWarmup] = useState<WarmupExercise[] | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
+
+  const generateAIWarmup = async () => {
+    setLoadingAI(true);
+    try {
+      const res = await fetch('/api/workout/warmup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workout_type: workoutType,
+          exercises: exerciseNames || [],
+        }),
+      });
+      const data = await res.json();
+      if (data.exercises) {
+        setAiWarmup(data.exercises);
+        setExpanded(true);
+      }
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
   const warmup =
-    exercises && exercises.length > 0
+    aiWarmup ||
+    (exercises && exercises.length > 0
       ? exercises
-      : DEFAULT_WARMUPS[workoutType] || DEFAULT_WARMUPS.full;
+      : DEFAULT_WARMUPS[workoutType] || DEFAULT_WARMUPS.full);
   const totalTime = warmup.reduce(
     (s, e) => s + (e.duration_sec || (e.reps || 10) * 3),
     0,
@@ -112,7 +141,20 @@ export function WarmupSuggestion({
         <Button size="sm" onClick={onStart} className="flex-1">
           <Play className="h-3 w-3 mr-1" /> Aquecer
         </Button>
-        <Button size="sm" variant="outline" onClick={onSkip} className="flex-1">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={generateAIWarmup}
+          disabled={loadingAI}
+        >
+          {loadingAI ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Sparkles className="h-3 w-3" />
+          )}
+          <span className="ml-1">IA</span>
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onSkip}>
           <SkipForward className="h-3 w-3 mr-1" /> Pular
         </Button>
       </div>
