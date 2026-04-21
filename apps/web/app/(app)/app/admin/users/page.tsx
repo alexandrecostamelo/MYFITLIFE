@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -188,7 +189,7 @@ export default function AdminUsersPage() {
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="truncate text-sm font-medium text-white/90">{u.full_name || '—'}</p>
+                            <Link href={`/app/admin/users/${u.id}`} className="truncate text-sm font-medium text-white/90 hover:text-accent transition-colors">{u.full_name || '—'}</Link>
                             {u.blocked && (
                               <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 text-[10px] font-medium text-red-400">Bloqueado</span>
                             )}

@@ -23,6 +23,8 @@ import {
   ArrowLeft,
   Activity,
   Video,
+  TrendingUp,
+  ArrowRightLeft,
 } from 'lucide-react';
 
 const NAV_SECTIONS = [
@@ -33,6 +35,8 @@ const NAV_SECTIONS = [
       { href: '/app/admin/users', label: 'Usuários', icon: Users, color: 'from-blue-500 to-indigo-600' },
       { href: '/app/admin/subscriptions', label: 'Assinaturas', icon: CreditCard, color: 'from-violet-500 to-purple-600' },
       { href: '/app/admin/financial', label: 'Financeiro', icon: DollarSign, color: 'from-green-500 to-emerald-600' },
+      { href: '/app/admin/transactions', label: 'Transações', icon: ArrowRightLeft, color: 'from-teal-500 to-cyan-600' },
+      { href: '/app/admin/analytics', label: 'Growth & Retenção', icon: TrendingUp, color: 'from-pink-500 to-violet-600' },
     ],
   },
   {

@@ -94,7 +94,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
   const { user_id, action, value } = body as {
     user_id: string;
-    action: 'block' | 'unblock' | 'change_tier';
+    action: string;
     value?: string;
   };
 
@@ -110,26 +110,44 @@ export async function PATCH(req: NextRequest) {
   } as Record<string, unknown>);
 
   if (action === 'block') {
-    await admin
-      .from('profiles')
-      .update({ blocked: true } as Record<string, unknown>)
-      .eq('id', user_id);
+    await admin.from('profiles').update({ blocked: true } as Record<string, unknown>).eq('id', user_id);
     return NextResponse.json({ ok: true });
   }
 
   if (action === 'unblock') {
-    await admin
-      .from('profiles')
-      .update({ blocked: false } as Record<string, unknown>)
-      .eq('id', user_id);
+    await admin.from('profiles').update({ blocked: false } as Record<string, unknown>).eq('id', user_id);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'suspend') {
+    await admin.from('profiles').update({ is_suspended: true } as Record<string, unknown>).eq('id', user_id);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'unsuspend') {
+    await admin.from('profiles').update({ is_suspended: false } as Record<string, unknown>).eq('id', user_id);
     return NextResponse.json({ ok: true });
   }
 
   if (action === 'change_tier' && value) {
-    await admin
-      .from('profiles')
-      .update({ subscription_tier: value } as Record<string, unknown>)
-      .eq('id', user_id);
+    await admin.from('profiles').update({ subscription_tier: value } as Record<string, unknown>).eq('id', user_id);
+    if (value !== 'free') {
+      await admin.from('subscriptions').update({ tier: value } as Record<string, unknown>).eq('user_id', user_id).eq('status', 'active');
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'set_role' && value) {
+    await admin.from('profiles').update({ role: value } as Record<string, unknown>).eq('id', user_id);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === 'extend_trial') {
+    const days = parseInt(value || '7');
+    await admin.from('subscriptions').update({
+      trial_end: new Date(Date.now() + days * 86400000).toISOString(),
+      status: 'trialing',
+    } as Record<string, unknown>).eq('user_id', user_id);
     return NextResponse.json({ ok: true });
   }
 

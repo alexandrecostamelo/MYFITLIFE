@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Play, Plus, Check, Loader2, Search, Camera, Dumbbell, Sparkles } from 'lucide-react';
+import { Play, Plus, Check, Loader2, Search, Camera, Dumbbell, Sparkles, ArrowLeft } from 'lucide-react';
 import { ExerciseVideo } from '@/components/exercise-video';
 
 type Exercise = {
@@ -136,7 +136,12 @@ export default function WorkoutPage() {
 
   return (
     <main className="mx-auto max-w-2xl p-4">
-      <h1 className="mb-4 text-2xl font-bold">Treino</h1>
+      <div className="mb-4 flex items-center gap-3">
+        <button onClick={() => router.back()} className="rounded-lg p-1.5 hover:bg-muted">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h1 className="text-2xl font-bold">Treino</h1>
+      </div>
 
       {!workoutId ? (
         <>
