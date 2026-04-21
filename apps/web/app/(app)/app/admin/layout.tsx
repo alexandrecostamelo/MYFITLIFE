@@ -18,9 +18,9 @@ export default async function AdminLayout({
   if (!(await isPlatformAdmin(supabase, user.id))) redirect('/app');
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[#08080d]">
       <AdminSidebar />
-      <div className="flex-1 ml-56 pb-24 md:pb-6">{children}</div>
+      <div className="flex-1 ml-60 min-h-screen pb-24 md:pb-6">{children}</div>
     </div>
   );
 }

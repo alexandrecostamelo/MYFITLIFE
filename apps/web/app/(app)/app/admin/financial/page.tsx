@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Loader2,
@@ -10,6 +9,8 @@ import {
   TrendingUp,
   Users,
   AlertTriangle,
+  ArrowUpRight,
+  Wallet,
 } from 'lucide-react';
 
 interface FinancialData {
@@ -37,11 +38,19 @@ const METHOD_LABELS: Record<string, string> = {
   unknown: 'Outro',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  paid: 'text-green-400',
-  failed: 'text-red-400',
-  pending: 'text-amber-400',
-  refunded: 'text-blue-400',
+const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+  paid: { bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+  failed: { bg: 'bg-red-500/10', text: 'text-red-400' },
+  pending: { bg: 'bg-amber-500/10', text: 'text-amber-400' },
+  refunded: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
+};
+
+const METHOD_COLORS: Record<string, string> = {
+  credit_card: 'from-blue-500 to-indigo-600',
+  pix: 'from-emerald-500 to-green-600',
+  boleto: 'from-amber-500 to-orange-600',
+  stripe: 'from-violet-500 to-purple-600',
+  unknown: 'from-gray-400 to-zinc-600',
 };
 
 export default function AdminFinancialPage() {
@@ -63,16 +72,24 @@ export default function AdminFinancialPage() {
 
   if (loading) {
     return (
-      <main className="p-6 flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <main className="flex min-h-[60vh] items-center justify-center p-8">
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div className="absolute inset-0 animate-ping rounded-full bg-green-500/20" />
+            <Loader2 className="relative h-8 w-8 animate-spin text-green-400" />
+          </div>
+          <p className="text-sm text-white/30">Carregando financeiro...</p>
+        </div>
       </main>
     );
   }
 
   if (!data) {
     return (
-      <main className="p-6">
-        <p className="text-muted-foreground">Erro ao carregar dados financeiros.</p>
+      <main className="p-8">
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-center">
+          <p className="text-sm text-red-400">Erro ao carregar dados financeiros.</p>
+        </div>
       </main>
     );
   }
@@ -81,142 +98,199 @@ export default function AdminFinancialPage() {
     ? Math.round((data.arpu_cents / data.period_days) * 365)
     : 0;
 
+  const totalByMethod = Object.values(data.by_method).reduce((a, b) => a + b, 0) || 1;
+
   return (
-    <main className="p-6 space-y-6 max-w-6xl">
+    <main className="space-y-6 p-6 lg:p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Financeiro</h1>
-        <Button size="sm" variant="outline" onClick={exportCSV}>
-          <Download className="h-3.5 w-3.5 mr-1" /> CSV
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Financeiro</h1>
+          <p className="text-sm text-white/35">Visão financeira da plataforma</p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={exportCSV}
+          className="gap-1.5 rounded-xl border-white/10 bg-white/[0.03] text-white/60 hover:bg-white/[0.06] hover:text-white"
+        >
+          <Download className="h-3.5 w-3.5" /> CSV
         </Button>
       </div>
 
       {/* Period selector */}
-      <div className="flex gap-1">
-        {[7, 30, 90, 365].map((d) => (
+      <div className="flex gap-1 rounded-xl bg-white/[0.03] p-1 w-fit">
+        {[
+          { value: 7, label: '7 dias' },
+          { value: 30, label: '30 dias' },
+          { value: 90, label: '90 dias' },
+          { value: 365, label: '1 ano' },
+        ].map((d) => (
           <button
-            key={d}
-            onClick={() => setDays(d)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              days === d ? 'bg-accent text-black' : 'bg-white/5 text-muted-foreground hover:bg-white/10'
+            key={d.value}
+            onClick={() => setDays(d.value)}
+            className={`rounded-lg px-4 py-1.5 text-xs font-medium transition-all duration-200 ${
+              days === d.value
+                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/20'
+                : 'text-white/40 hover:text-white/60'
             }`}
           >
-            {d === 365 ? '1 ano' : `${d} dias`}
+            {d.label}
           </button>
         ))}
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="h-4 w-4 text-green-500" />
-            <span className="text-xs text-muted-foreground">Receita paga</span>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:border-emerald-500/20">
+          <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-emerald-500/10 blur-xl transition-all group-hover:scale-150" />
+          <div className="relative">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-500/25">
+              <DollarSign className="h-4 w-4 text-white" />
+            </div>
+            <p className="text-2xl font-bold text-white">{formatBRL(data.total_paid_cents)}</p>
+            <p className="mt-0.5 text-xs text-white/35">Receita paga</p>
           </div>
-          <p className="text-2xl font-bold">{formatBRL(data.total_paid_cents)}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-            <span className="text-xs text-muted-foreground">Falhadas</span>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:border-red-500/20">
+          <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-red-500/10 blur-xl transition-all group-hover:scale-150" />
+          <div className="relative">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-rose-600 shadow-lg shadow-red-500/25">
+              <AlertTriangle className="h-4 w-4 text-white" />
+            </div>
+            <p className="text-2xl font-bold text-white">{formatBRL(data.total_failed_cents)}</p>
+            <p className="mt-0.5 text-xs text-white/35">Falhadas</p>
           </div>
-          <p className="text-2xl font-bold">{formatBRL(data.total_failed_cents)}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="h-4 w-4 text-blue-500" />
-            <span className="text-xs text-muted-foreground">ARPU ({days}d)</span>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:border-blue-500/20">
+          <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-blue-500/10 blur-xl transition-all group-hover:scale-150" />
+          <div className="relative">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
+              <Users className="h-4 w-4 text-white" />
+            </div>
+            <p className="text-2xl font-bold text-white">{formatBRL(data.arpu_cents)}</p>
+            <p className="mt-0.5 text-xs text-white/35">ARPU ({days}d)</p>
           </div>
-          <p className="text-2xl font-bold">{formatBRL(data.arpu_cents)}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="h-4 w-4 text-violet-500" />
-            <span className="text-xs text-muted-foreground">LTV estimado</span>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:border-violet-500/20">
+          <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-violet-500/10 blur-xl transition-all group-hover:scale-150" />
+          <div className="relative">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25">
+              <TrendingUp className="h-4 w-4 text-white" />
+            </div>
+            <p className="text-2xl font-bold text-white">{formatBRL(ltvEstimate)}</p>
+            <p className="mt-0.5 text-xs text-white/35">LTV estimado</p>
           </div>
-          <p className="text-2xl font-bold">{formatBRL(ltvEstimate)}</p>
-        </Card>
+        </div>
       </div>
 
       {/* Breakdowns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-5 space-y-3">
-          <h2 className="text-sm font-semibold">Receita por método</h2>
-          {Object.entries(data.by_method)
-            .sort(([, a], [, b]) => b - a)
-            .map(([method, amount]) => (
-              <div key={method} className="flex justify-between text-sm">
-                <span>{METHOD_LABELS[method] || method}</span>
-                <span className="font-mono text-muted-foreground">{formatBRL(amount)}</span>
-              </div>
-            ))}
-          {Object.keys(data.by_method).length === 0 && (
-            <p className="text-sm text-muted-foreground">Sem dados</p>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+          <h2 className="mb-4 text-sm font-semibold text-white/70">Receita por método</h2>
+          {Object.entries(data.by_method).length === 0 ? (
+            <p className="text-sm text-white/25">Sem dados</p>
+          ) : (
+            <div className="space-y-3">
+              {Object.entries(data.by_method)
+                .sort(([, a], [, b]) => b - a)
+                .map(([method, amount]) => {
+                  const pct = (amount / totalByMethod) * 100;
+                  return (
+                    <div key={method}>
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <span className="text-sm text-white/60">{METHOD_LABELS[method] || method}</span>
+                        <span className="font-mono text-sm font-medium text-white/80">{formatBRL(amount)}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-white/[0.04]">
+                        <div
+                          className={`h-full rounded-full bg-gradient-to-r ${METHOD_COLORS[method] || 'from-gray-500 to-zinc-600'} transition-all duration-700`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           )}
-        </Card>
+        </div>
 
-        <Card className="p-5 space-y-3">
-          <h2 className="text-sm font-semibold">Receita por plano</h2>
-          {Object.entries(data.by_plan)
-            .sort(([, a], [, b]) => b - a)
-            .map(([plan, amount]) => (
-              <div key={plan} className="flex justify-between text-sm">
-                <span className="capitalize">{plan}</span>
-                <span className="font-mono text-muted-foreground">{formatBRL(amount)}</span>
-              </div>
-            ))}
-          {Object.keys(data.by_plan).length === 0 && (
-            <p className="text-sm text-muted-foreground">Sem dados</p>
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+          <h2 className="mb-4 text-sm font-semibold text-white/70">Receita por plano</h2>
+          {Object.entries(data.by_plan).length === 0 ? (
+            <p className="text-sm text-white/25">Sem dados</p>
+          ) : (
+            <div className="space-y-2">
+              {Object.entries(data.by_plan)
+                .sort(([, a], [, b]) => b - a)
+                .map(([plan, amount]) => (
+                  <div key={plan} className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3">
+                    <span className="text-sm font-medium capitalize text-white/60">{plan}</span>
+                    <span className="font-mono text-sm font-semibold text-white/80">{formatBRL(amount)}</span>
+                  </div>
+                ))}
+            </div>
           )}
-        </Card>
+        </div>
       </div>
 
       {/* Recent transactions */}
-      <Card className="overflow-x-auto">
-        <div className="p-4 border-b border-white/10">
-          <h2 className="text-sm font-semibold">
-            Transações recentes ({data.transaction_count} no período)
-          </h2>
+      <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+        <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
+          <div className="flex items-center gap-2">
+            <ArrowUpRight className="h-4 w-4 text-white/30" />
+            <h2 className="text-sm font-semibold text-white/70">
+              Transações recentes
+            </h2>
+          </div>
+          <span className="text-xs text-white/25">{data.transaction_count} no período</span>
         </div>
         <table className="w-full text-sm">
-          <thead className="border-b border-white/10 text-xs text-muted-foreground uppercase">
-            <tr>
-              <th className="text-left p-3">Data</th>
-              <th className="text-left p-3">Descrição</th>
-              <th className="text-left p-3">Método</th>
-              <th className="text-left p-3">Status</th>
-              <th className="text-right p-3">Valor</th>
+          <thead>
+            <tr className="border-b border-white/[0.06]">
+              <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Data</th>
+              <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Descrição</th>
+              <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Método</th>
+              <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Status</th>
+              <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-white/25">Valor</th>
             </tr>
           </thead>
           <tbody>
-            {data.recent_transactions.map((t, i) => (
-              <tr key={i} className="border-b border-white/5">
-                <td className="p-3 text-xs text-muted-foreground">
-                  {new Date(t.created_at as string).toLocaleDateString('pt-BR')}
-                </td>
-                <td className="p-3 text-xs">{String(t.description || '—')}</td>
-                <td className="p-3 text-xs text-muted-foreground">
-                  {METHOD_LABELS[String(t.method)] || String(t.method || '—')}
-                </td>
-                <td className="p-3">
-                  <span className={`text-xs font-medium ${STATUS_COLORS[String(t.status)] || ''}`}>
-                    {String(t.status)}
-                  </span>
-                </td>
-                <td className="p-3 text-right text-xs font-mono">
-                  {formatBRL(Number(t.amount_cents) || 0)}
-                </td>
-              </tr>
-            ))}
+            {data.recent_transactions.map((t, i) => {
+              const st = STATUS_STYLES[String(t.status)] || STATUS_STYLES.pending;
+              return (
+                <tr key={i} className="border-b border-white/[0.04] transition-colors hover:bg-white/[0.02]">
+                  <td className="px-5 py-3 text-xs text-white/35">
+                    {new Date(t.created_at as string).toLocaleDateString('pt-BR')}
+                  </td>
+                  <td className="px-5 py-3 text-xs text-white/60">{String(t.description || '—')}</td>
+                  <td className="px-5 py-3 text-xs text-white/35">
+                    {METHOD_LABELS[String(t.method)] || String(t.method || '—')}
+                  </td>
+                  <td className="px-5 py-3">
+                    <span className={`inline-flex rounded-lg ${st.bg} px-2 py-0.5 text-xs font-medium ${st.text}`}>
+                      {String(t.status)}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-right font-mono text-xs text-white/60">
+                    {formatBRL(Number(t.amount_cents) || 0)}
+                  </td>
+                </tr>
+              );
+            })}
             {data.recent_transactions.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                  Nenhuma transação no período.
+                <td colSpan={5} className="p-12 text-center">
+                  <Wallet className="mx-auto mb-2 h-8 w-8 text-white/10" />
+                  <p className="text-sm text-white/30">Nenhuma transação no período</p>
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-      </Card>
+      </div>
     </main>
   );
 }

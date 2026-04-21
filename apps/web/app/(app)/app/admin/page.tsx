@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
 import {
   Users,
   CreditCard,
@@ -12,6 +11,8 @@ import {
   Loader2,
   UserPlus,
   UserMinus,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
 
 interface DashboardData {
@@ -33,6 +34,18 @@ function formatBRL(cents: number) {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+const TIER_GRADIENT: Record<string, string> = {
+  free: 'from-slate-500 to-zinc-600',
+  pro: 'from-accent to-emerald-600',
+  premium: 'from-amber-500 to-orange-600',
+};
+
+const TIER_BG: Record<string, string> = {
+  free: 'bg-white/[0.04]',
+  pro: 'bg-accent/10',
+  premium: 'bg-amber-500/10',
+};
+
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,16 +59,24 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <main className="p-6 flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <main className="flex min-h-[60vh] items-center justify-center p-8">
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div className="absolute inset-0 animate-ping rounded-full bg-accent/20" />
+            <Loader2 className="relative h-8 w-8 animate-spin text-accent" />
+          </div>
+          <p className="text-sm text-white/30">Carregando dados...</p>
+        </div>
       </main>
     );
   }
 
   if (!data) {
     return (
-      <main className="p-6">
-        <p className="text-muted-foreground">Erro ao carregar dashboard.</p>
+      <main className="p-8">
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-center">
+          <p className="text-sm text-red-400">Erro ao carregar dashboard.</p>
+        </div>
       </main>
     );
   }
@@ -64,152 +85,216 @@ export default function AdminDashboardPage() {
     ? ((data.revenue_this_month_cents - data.revenue_last_month_cents) / data.revenue_last_month_cents) * 100
     : 0;
 
-  return (
-    <main className="p-6 space-y-6 max-w-6xl">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+  const totalTier = Object.values(data.tier_counts).reduce((a, b) => a + b, 0) || 1;
 
-      {/* KPIs Row 1 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          icon={DollarSign}
-          label="MRR"
-          value={formatBRL(data.mrr_cents)}
-          iconColor="text-green-500"
-        />
-        <KpiCard
-          icon={DollarSign}
-          label="Receita este mês"
-          value={formatBRL(data.revenue_this_month_cents)}
-          subtitle={revenueChange !== 0 ? `${revenueChange > 0 ? '+' : ''}${revenueChange.toFixed(1)}% vs mês anterior` : undefined}
-          subtitleColor={revenueChange >= 0 ? 'text-green-500' : 'text-red-500'}
-          iconColor="text-emerald-500"
-        />
-        <KpiCard
-          icon={Users}
-          label="Total de usuários"
-          value={data.total_users.toLocaleString('pt-BR')}
-          iconColor="text-blue-500"
-        />
-        <KpiCard
-          icon={Activity}
-          label="Ativos (7 dias)"
-          value={data.active_users_7d.toLocaleString('pt-BR')}
-          subtitle={data.total_users > 0 ? `${((data.active_users_7d / data.total_users) * 100).toFixed(1)}% do total` : undefined}
-          iconColor="text-violet-500"
-        />
+  return (
+    <main className="space-y-6 p-6 lg:p-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+        <p className="text-sm text-white/35">Visão geral da plataforma</p>
       </div>
 
-      {/* KPIs Row 2 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
+      {/* Hero KPIs — MRR + Revenue */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent/20 via-emerald-500/10 to-teal-600/5 p-6 ring-1 ring-accent/20">
+          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-accent/10 blur-2xl transition-all group-hover:bg-accent/15" />
+          <div className="relative">
+            <div className="mb-1 flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-emerald-600 shadow-lg shadow-accent/25">
+                <DollarSign className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-sm font-medium text-white/50">MRR</span>
+            </div>
+            <p className="mt-3 text-4xl font-bold tracking-tight text-white">
+              {formatBRL(data.mrr_cents)}
+            </p>
+            <p className="mt-1 text-xs text-accent/70">Receita mensal recorrente</p>
+          </div>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500/15 via-emerald-500/8 to-transparent p-6 ring-1 ring-green-500/15">
+          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-green-500/10 blur-2xl transition-all group-hover:bg-green-500/15" />
+          <div className="relative">
+            <div className="mb-1 flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/25">
+                <TrendingUp className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-sm font-medium text-white/50">Receita este mês</span>
+            </div>
+            <p className="mt-3 text-4xl font-bold tracking-tight text-white">
+              {formatBRL(data.revenue_this_month_cents)}
+            </p>
+            {revenueChange !== 0 && (
+              <div className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${revenueChange > 0 ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
+                {revenueChange > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                {revenueChange > 0 ? '+' : ''}{revenueChange.toFixed(1)}% vs mês anterior
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary KPIs */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+        <MetricCard
+          icon={Users}
+          label="Total usuários"
+          value={data.total_users.toLocaleString('pt-BR')}
+          gradient="from-blue-500 to-indigo-600"
+          glow="bg-blue-500/10"
+        />
+        <MetricCard
+          icon={Activity}
+          label="Ativos (7d)"
+          value={data.active_users_7d.toLocaleString('pt-BR')}
+          subtitle={data.total_users > 0 ? `${((data.active_users_7d / data.total_users) * 100).toFixed(0)}%` : undefined}
+          gradient="from-violet-500 to-purple-600"
+          glow="bg-violet-500/10"
+        />
+        <MetricCard
           icon={CreditCard}
-          label="Assinaturas ativas"
+          label="Assinaturas"
           value={data.active_subscriptions.toLocaleString('pt-BR')}
-          iconColor="text-accent"
+          gradient="from-cyan-500 to-blue-600"
+          glow="bg-cyan-500/10"
         />
-        <KpiCard
+        <MetricCard
           icon={UserPlus}
-          label="Novos este mês"
+          label="Novos (mês)"
           value={data.new_users_this_month.toLocaleString('pt-BR')}
-          subtitle={data.growth_pct !== 0 ? `${data.growth_pct > 0 ? '+' : ''}${data.growth_pct}% crescimento` : undefined}
-          subtitleColor={data.growth_pct >= 0 ? 'text-green-500' : 'text-red-500'}
-          iconColor="text-green-500"
+          subtitle={data.growth_pct !== 0 ? `${data.growth_pct > 0 ? '+' : ''}${data.growth_pct}%` : undefined}
+          subtitlePositive={data.growth_pct >= 0}
+          gradient="from-emerald-500 to-green-600"
+          glow="bg-emerald-500/10"
         />
-        <KpiCard
+        <MetricCard
           icon={UserMinus}
           label="Cancelados (30d)"
           value={data.canceled_last_30d.toLocaleString('pt-BR')}
-          iconColor="text-red-500"
+          gradient="from-red-500 to-rose-600"
+          glow="bg-red-500/10"
         />
-        <KpiCard
+        <MetricCard
           icon={data.churn_rate_pct > 5 ? TrendingDown : TrendingUp}
-          label="Taxa de Churn"
+          label="Churn"
           value={`${data.churn_rate_pct}%`}
-          iconColor={data.churn_rate_pct > 5 ? 'text-red-500' : 'text-green-500'}
+          gradient={data.churn_rate_pct > 5 ? 'from-red-500 to-orange-600' : 'from-green-500 to-teal-600'}
+          glow={data.churn_rate_pct > 5 ? 'bg-red-500/10' : 'bg-green-500/10'}
         />
       </div>
 
-      {/* Tier breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-5 space-y-3">
-          <h2 className="text-sm font-semibold">Distribuição por plano</h2>
-          {Object.entries(data.tier_counts).map(([tier, count]) => {
-            const total = Object.values(data.tier_counts).reduce((a, b) => a + b, 0) || 1;
-            const pct = (count / total) * 100;
-            return (
-              <div key={tier} className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="capitalize">{tier}</span>
-                  <span className="text-muted-foreground">{count} ({pct.toFixed(0)}%)</span>
-                </div>
-                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      tier === 'premium' ? 'bg-amber-500' : tier === 'pro' ? 'bg-accent' : 'bg-white/20'
-                    }`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </Card>
+      {/* Bottom Row: Tier Breakdown + Summary */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Tier Breakdown */}
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+          <h2 className="mb-4 text-sm font-semibold text-white/70">Distribuição por plano</h2>
 
-        <Card className="p-5 space-y-3">
-          <h2 className="text-sm font-semibold">Resumo rápido</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Receita mês passado</span>
-              <span>{formatBRL(data.revenue_last_month_cents)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Novos mês passado</span>
-              <span>{data.new_users_last_month}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">ARPU estimado</span>
-              <span>{data.active_subscriptions > 0 ? formatBRL(Math.round(data.mrr_cents / data.active_subscriptions)) : 'N/A'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">LTV estimado (12mo)</span>
-              <span>
-                {data.active_subscriptions > 0
-                  ? formatBRL(Math.round((data.mrr_cents / data.active_subscriptions) * 12))
-                  : 'N/A'}
-              </span>
-            </div>
+          {/* Tier bar */}
+          <div className="mb-5 flex h-3 overflow-hidden rounded-full bg-white/[0.04]">
+            {Object.entries(data.tier_counts).map(([tier, count]) => {
+              const pct = (count / totalTier) * 100;
+              if (pct === 0) return null;
+              return (
+                <div
+                  key={tier}
+                  className={`h-full bg-gradient-to-r ${TIER_GRADIENT[tier] || 'from-gray-500 to-gray-600'} transition-all duration-700 first:rounded-l-full last:rounded-r-full`}
+                  style={{ width: `${pct}%` }}
+                />
+              );
+            })}
           </div>
-        </Card>
+
+          {/* Tier items */}
+          <div className="space-y-3">
+            {Object.entries(data.tier_counts).map(([tier, count]) => {
+              const pct = (count / totalTier) * 100;
+              return (
+                <div key={tier} className={`flex items-center justify-between rounded-xl ${TIER_BG[tier] || ''} px-4 py-3`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`h-2.5 w-2.5 rounded-full bg-gradient-to-br ${TIER_GRADIENT[tier] || 'from-gray-500 to-gray-600'}`} />
+                    <span className="text-sm font-medium capitalize text-white/80">{tier}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-white">{count}</span>
+                    <span className="min-w-[3rem] text-right text-xs text-white/35">{pct.toFixed(0)}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Quick Summary */}
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+          <h2 className="mb-4 text-sm font-semibold text-white/70">Resumo rápido</h2>
+          <div className="space-y-1">
+            <SummaryRow
+              label="Receita mês passado"
+              value={formatBRL(data.revenue_last_month_cents)}
+            />
+            <SummaryRow
+              label="Novos mês passado"
+              value={String(data.new_users_last_month)}
+            />
+            <SummaryRow
+              label="ARPU estimado"
+              value={data.active_subscriptions > 0 ? formatBRL(Math.round(data.mrr_cents / data.active_subscriptions)) : 'N/A'}
+              highlight
+            />
+            <SummaryRow
+              label="LTV estimado (12m)"
+              value={data.active_subscriptions > 0 ? formatBRL(Math.round((data.mrr_cents / data.active_subscriptions) * 12)) : 'N/A'}
+              highlight
+            />
+          </div>
+        </div>
       </div>
     </main>
   );
 }
 
-function KpiCard({
+function MetricCard({
   icon: Icon,
   label,
   value,
   subtitle,
-  subtitleColor,
-  iconColor,
+  subtitlePositive,
+  gradient,
+  glow,
 }: {
   icon: React.ElementType;
   label: string;
   value: string;
   subtitle?: string;
-  subtitleColor?: string;
-  iconColor?: string;
+  subtitlePositive?: boolean;
+  gradient: string;
+  glow: string;
 }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className={`h-4 w-4 ${iconColor || 'text-muted-foreground'}`} />
-        <span className="text-xs text-muted-foreground">{label}</span>
+    <div className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition-all duration-300 hover:border-white/[0.1] hover:bg-white/[0.04]">
+      <div className={`absolute -right-4 -top-4 h-16 w-16 rounded-full ${glow} blur-xl transition-all group-hover:scale-150`} />
+      <div className="relative">
+        <div className={`mb-3 flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} shadow-lg`}>
+          <Icon className="h-3.5 w-3.5 text-white" />
+        </div>
+        <p className="text-xl font-bold text-white">{value}</p>
+        <p className="mt-0.5 text-[11px] text-white/35">{label}</p>
+        {subtitle && (
+          <p className={`mt-1 text-[11px] font-medium ${subtitlePositive === false ? 'text-red-400' : subtitlePositive ? 'text-green-400' : 'text-white/50'}`}>
+            {subtitle}
+          </p>
+        )}
       </div>
-      <p className="text-2xl font-bold">{value}</p>
-      {subtitle && (
-        <p className={`text-xs mt-1 ${subtitleColor || 'text-muted-foreground'}`}>{subtitle}</p>
-      )}
-    </Card>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.03]">
+      <span className="text-sm text-white/40">{label}</span>
+      <span className={`text-sm font-semibold ${highlight ? 'text-accent' : 'text-white/80'}`}>{value}</span>
+    </div>
   );
 }

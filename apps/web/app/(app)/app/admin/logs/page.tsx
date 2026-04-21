@@ -1,13 +1,17 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   Loader2,
   ChevronLeft,
   ChevronRight,
   ScrollText,
+  Shield,
+  UserX,
+  UserCheck,
+  Crown,
+  Trash2,
+  Eye,
 } from 'lucide-react';
 
 interface AuditLog {
@@ -20,12 +24,12 @@ interface AuditLog {
   created_at: string;
 }
 
-const ACTION_COLORS: Record<string, string> = {
-  block: 'bg-red-500/20 text-red-400',
-  unblock: 'bg-green-500/20 text-green-400',
-  change_tier: 'bg-accent/20 text-accent',
-  remove_content: 'bg-red-500/20 text-red-400',
-  dismiss: 'bg-white/10 text-white/60',
+const ACTION_STYLES: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
+  block: { bg: 'bg-red-500/10', text: 'text-red-400', icon: UserX },
+  unblock: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: UserCheck },
+  change_tier: { bg: 'bg-accent/10', text: 'text-accent', icon: Crown },
+  remove_content: { bg: 'bg-red-500/10', text: 'text-red-400', icon: Trash2 },
+  dismiss: { bg: 'bg-white/[0.06]', text: 'text-white/50', icon: Eye },
 };
 
 export default function AdminLogsPage() {
@@ -48,64 +52,89 @@ export default function AdminLogsPage() {
   useEffect(() => { load(); }, [load]);
 
   return (
-    <main className="p-6 space-y-4 max-w-5xl">
+    <main className="space-y-6 p-6 lg:p-8">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ScrollText className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-2xl font-bold tracking-tight">Logs de Auditoria</h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Logs de Auditoria</h1>
+          <p className="text-sm text-white/35">{total} registros</p>
         </div>
-        <span className="text-sm text-muted-foreground">{total} registros</span>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-500 to-zinc-600 shadow-lg">
+          <ScrollText className="h-4 w-4 text-white" />
+        </div>
       </div>
 
-      <Card className="divide-y divide-white/5">
+      <div className="space-y-2">
         {loading ? (
-          <div className="p-8 text-center">
-            <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+          <div className="flex items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] p-16">
+            <Loader2 className="h-5 w-5 animate-spin text-white/30" />
           </div>
         ) : logs.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            Nenhum log registrado.
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] p-16">
+            <Shield className="mb-2 h-8 w-8 text-white/10" />
+            <p className="text-sm text-white/30">Nenhum log registrado</p>
           </div>
         ) : (
-          logs.map((log) => (
-            <div key={log.id} className="p-4 flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${ACTION_COLORS[log.action] || 'bg-white/10 text-white/60'}`}>
-                    {log.action}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    por {log.admin_name}
-                  </span>
+          logs.map((log) => {
+            const style = ACTION_STYLES[log.action] || { bg: 'bg-white/[0.06]', text: 'text-white/50', icon: Eye };
+            const ActionIcon = style.icon;
+            return (
+              <div
+                key={log.id}
+                className="group flex items-start gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition-all hover:border-white/[0.1] hover:bg-white/[0.03]"
+              >
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${style.bg}`}>
+                  <ActionIcon className={`h-4 w-4 ${style.text}`} />
                 </div>
-                {log.target_user_id && (
-                  <p className="text-xs text-muted-foreground">
-                    Alvo: <span className="font-mono">{log.target_user_id.slice(0, 8)}...</span>
-                  </p>
-                )}
-                {log.details && Object.keys(log.details).length > 0 && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {JSON.stringify(log.details)}
-                  </p>
-                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex rounded-lg ${style.bg} px-2 py-0.5 text-xs font-medium ${style.text}`}>
+                      {log.action}
+                    </span>
+                    <span className="text-xs text-white/30">por</span>
+                    <span className="text-xs font-medium text-white/60">{log.admin_name}</span>
+                  </div>
+                  {log.target_user_id && (
+                    <p className="mt-1 text-xs text-white/25">
+                      Alvo: <span className="font-mono text-white/40">{log.target_user_id.slice(0, 8)}...</span>
+                    </p>
+                  )}
+                  {log.details && Object.keys(log.details).length > 0 && (
+                    <p className="mt-0.5 max-w-lg truncate text-xs text-white/20">
+                      {JSON.stringify(log.details)}
+                    </p>
+                  )}
+                </div>
+                <span className="shrink-0 text-xs text-white/20">
+                  {new Date(log.created_at).toLocaleString('pt-BR')}
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {new Date(log.created_at).toLocaleString('pt-BR')}
-              </span>
-            </div>
-          ))
+            );
+          })
         )}
-      </Card>
+      </div>
 
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3">
-          <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+        <div className="flex items-center justify-center gap-2">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+            className="rounded-xl border border-white/[0.06] p-2 text-white/40 transition-colors hover:bg-white/[0.04] hover:text-white disabled:opacity-30"
+          >
             <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground">{page}/{totalPages}</span>
-          <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+          </button>
+          <div className="flex items-center gap-1 rounded-xl bg-white/[0.03] px-3 py-1.5 text-xs">
+            <span className="font-semibold text-white">{page}</span>
+            <span className="text-white/25">de</span>
+            <span className="text-white/50">{totalPages}</span>
+          </div>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+            className="rounded-xl border border-white/[0.06] p-2 text-white/40 transition-colors hover:bg-white/[0.04] hover:text-white disabled:opacity-30"
+          >
             <ChevronRight className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       )}
     </main>

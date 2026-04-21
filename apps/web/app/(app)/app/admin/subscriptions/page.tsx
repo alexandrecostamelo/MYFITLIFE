@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Loader2,
@@ -10,6 +9,7 @@ import {
   ChevronRight,
   CreditCard,
   Banknote,
+  Wallet,
 } from 'lucide-react';
 
 interface Subscription {
@@ -29,13 +29,13 @@ interface Subscription {
   paused_until: string | null;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-500/20 text-green-400',
-  trialing: 'bg-blue-500/20 text-blue-400',
-  canceled: 'bg-red-500/20 text-red-400',
-  paused: 'bg-amber-500/20 text-amber-400',
-  pending: 'bg-white/10 text-white/60',
-  past_due: 'bg-orange-500/20 text-orange-400',
+const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
+  active: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
+  trialing: { bg: 'bg-blue-500/10', text: 'text-blue-400', dot: 'bg-blue-500' },
+  canceled: { bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-500' },
+  paused: { bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-500' },
+  pending: { bg: 'bg-white/[0.06]', text: 'text-white/50', dot: 'bg-white/40' },
+  past_due: { bg: 'bg-orange-500/10', text: 'text-orange-400', dot: 'bg-orange-500' },
 };
 
 const PLAN_PRICES: Record<string, number> = {
@@ -48,6 +48,15 @@ const PLAN_PRICES: Record<string, number> = {
 function formatBRL(cents: number) {
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
+
+const FILTER_LABELS: Record<string, string> = {
+  '': 'Todos',
+  active: 'Ativo',
+  trialing: 'Trial',
+  paused: 'Pausado',
+  canceled: 'Cancelado',
+  past_due: 'Inadimplente',
+};
 
 export default function AdminSubscriptionsPage() {
   const [subs, setSubs] = useState<Subscription[]>([]);
@@ -78,105 +87,116 @@ export default function AdminSubscriptionsPage() {
   };
 
   return (
-    <main className="p-6 space-y-4 max-w-6xl">
+    <main className="space-y-6 p-6 lg:p-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Assinaturas</h1>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{total} total</span>
-          <Button size="sm" variant="outline" onClick={exportCSV}>
-            <Download className="h-3.5 w-3.5 mr-1" /> CSV
-          </Button>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Assinaturas</h1>
+          <p className="text-sm text-white/35">{total} assinaturas encontradas</p>
         </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={exportCSV}
+          className="gap-1.5 rounded-xl border-white/10 bg-white/[0.03] text-white/60 hover:bg-white/[0.06] hover:text-white"
+        >
+          <Download className="h-3.5 w-3.5" /> CSV
+        </Button>
       </div>
 
       {/* Status filter */}
-      <div className="flex gap-1 flex-wrap">
-        {['', 'active', 'trialing', 'paused', 'canceled', 'past_due'].map((s) => (
+      <div className="flex gap-1 rounded-xl bg-white/[0.03] p-1">
+        {Object.entries(FILTER_LABELS).map(([val, label]) => (
           <button
-            key={s}
-            onClick={() => { setStatusFilter(s); setPage(1); }}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-              statusFilter === s
-                ? 'bg-accent text-black'
-                : 'bg-white/5 text-muted-foreground hover:bg-white/10'
+            key={val}
+            onClick={() => { setStatusFilter(val); setPage(1); }}
+            className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all duration-200 ${
+              statusFilter === val
+                ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/20'
+                : 'text-white/40 hover:text-white/60'
             }`}
           >
-            {s === '' ? 'Todos' : s === 'past_due' ? 'Inadimplente' : s.charAt(0).toUpperCase() + s.slice(1)}
+            {label}
           </button>
         ))}
       </div>
 
       {/* Table */}
-      <Card className="overflow-x-auto">
+      <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
         <table className="w-full text-sm">
-          <thead className="border-b border-white/10 text-xs text-muted-foreground uppercase">
-            <tr>
-              <th className="text-left p-3">Usuário</th>
-              <th className="text-left p-3">Plano</th>
-              <th className="text-left p-3">Valor</th>
-              <th className="text-left p-3">Status</th>
-              <th className="text-left p-3">Provider</th>
-              <th className="text-left p-3">Próx. cobrança</th>
-              <th className="text-left p-3">Criado em</th>
+          <thead>
+            <tr className="border-b border-white/[0.06]">
+              <th className="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Usuário</th>
+              <th className="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Plano</th>
+              <th className="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Valor</th>
+              <th className="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Status</th>
+              <th className="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Pagamento</th>
+              <th className="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Próx. cobrança</th>
+              <th className="px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-wider text-white/25">Criado</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center">
-                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                <td colSpan={7} className="p-12 text-center">
+                  <Loader2 className="mx-auto h-5 w-5 animate-spin text-violet-400/60" />
                 </td>
               </tr>
             ) : subs.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                  Nenhuma assinatura encontrada.
+                <td colSpan={7} className="p-12 text-center">
+                  <Wallet className="mx-auto mb-2 h-8 w-8 text-white/10" />
+                  <p className="text-sm text-white/30">Nenhuma assinatura encontrada</p>
                 </td>
               </tr>
             ) : (
               subs.map((s) => {
                 const planKey = `${s.plan}_${s.billing_cycle}`;
                 const price = PLAN_PRICES[planKey] || 0;
+                const st = STATUS_STYLES[s.status] || STATUS_STYLES.pending;
                 return (
-                  <tr key={s.id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                    <td className="p-3">
-                      <p className="font-medium text-sm">{s.user_name || '—'}</p>
-                      <p className="text-xs text-muted-foreground">{s.user_email || s.user_id.slice(0, 8)}</p>
+                  <tr key={s.id} className="border-b border-white/[0.04] transition-colors hover:bg-white/[0.02]">
+                    <td className="px-5 py-3">
+                      <p className="text-sm font-medium text-white/80">{s.user_name || '—'}</p>
+                      <p className="text-xs text-white/25">{s.user_email || s.user_id.slice(0, 8)}</p>
                     </td>
-                    <td className="p-3">
-                      <span className="text-xs font-medium capitalize">{s.plan}</span>
-                      <span className="text-xs text-muted-foreground ml-1">
-                        ({s.billing_cycle === 'yearly' ? 'anual' : 'mensal'})
+                    <td className="px-5 py-3">
+                      <span className="text-sm font-medium capitalize text-white/80">{s.plan}</span>
+                      <span className="ml-1.5 text-xs text-white/30">
+                        {s.billing_cycle === 'yearly' ? 'anual' : 'mensal'}
                       </span>
                     </td>
-                    <td className="p-3 text-xs font-mono">{formatBRL(price)}</td>
-                    <td className="p-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[s.status] || STATUS_COLORS.pending}`}>
+                    <td className="px-5 py-3">
+                      <span className="font-mono text-sm text-white/60">{formatBRL(price)}</span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center gap-1.5 rounded-lg ${st.bg} px-2.5 py-1 text-xs font-medium ${st.text}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
                         {s.status}
                       </span>
                       {s.paused_until && (
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                        <p className="mt-0.5 text-[10px] text-white/25">
                           até {new Date(s.paused_until).toLocaleDateString('pt-BR')}
                         </p>
                       )}
                     </td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-1.5 text-xs text-white/35">
                         {s.payment_method === 'pix' ? (
-                          <Banknote className="h-3 w-3" />
+                          <Banknote className="h-3.5 w-3.5 text-green-400/60" />
                         ) : (
-                          <CreditCard className="h-3 w-3" />
+                          <CreditCard className="h-3.5 w-3.5 text-blue-400/60" />
                         )}
-                        {s.provider || '—'}
+                        <span>{s.provider || '—'}</span>
                         {s.card_last4 && <span className="font-mono">*{s.card_last4}</span>}
                       </div>
                     </td>
-                    <td className="p-3 text-xs text-muted-foreground">
+                    <td className="px-5 py-3 text-xs text-white/35">
                       {s.next_billing_at
                         ? new Date(s.next_billing_at).toLocaleDateString('pt-BR')
                         : '—'}
                     </td>
-                    <td className="p-3 text-xs text-muted-foreground">
+                    <td className="px-5 py-3 text-xs text-white/35">
                       {new Date(s.created_at).toLocaleDateString('pt-BR')}
                     </td>
                   </tr>
@@ -185,18 +205,30 @@ export default function AdminSubscriptionsPage() {
             )}
           </tbody>
         </table>
-      </Card>
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3">
-          <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+        <div className="flex items-center justify-center gap-2">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+            className="rounded-xl border border-white/[0.06] p-2 text-white/40 transition-colors hover:bg-white/[0.04] hover:text-white disabled:opacity-30"
+          >
             <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground">{page}/{totalPages}</span>
-          <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+          </button>
+          <div className="flex items-center gap-1 rounded-xl bg-white/[0.03] px-3 py-1.5 text-xs">
+            <span className="font-semibold text-white">{page}</span>
+            <span className="text-white/25">de</span>
+            <span className="text-white/50">{totalPages}</span>
+          </div>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+            className="rounded-xl border border-white/[0.06] p-2 text-white/40 transition-colors hover:bg-white/[0.04] hover:text-white disabled:opacity-30"
+          >
             <ChevronRight className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       )}
     </main>
