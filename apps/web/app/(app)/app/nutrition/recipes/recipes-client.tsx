@@ -11,7 +11,9 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
 } from 'lucide-react';
+import Link from 'next/link';
 
 interface Props {
   initialRecipes: Record<string, unknown>[];
@@ -329,6 +331,13 @@ export function RecipesClient({ initialRecipes, regions, diets }: Props) {
                       ))}
                     </ol>
                   </div>
+
+                  <Link
+                    href={`/app/nutrition/recipes/${id}`}
+                    className="flex items-center gap-1 text-sm text-accent font-medium"
+                  >
+                    <ExternalLink className="h-3 w-3" /> Ver receita completa
+                  </Link>
                 </div>
               )}
             </div>

@@ -59,7 +59,7 @@ export default async function RunsHistoryPage() {
         const startedAt = String(s.started_at);
 
         return (
-          <div key={String(s.id)} className="glass-card p-4 space-y-2">
+          <Link key={String(s.id)} href={`/app/workouts/runs/${String(s.id)}`} className="glass-card p-4 space-y-2 block">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold">
@@ -84,7 +84,7 @@ export default async function RunsHistoryPage() {
               <span>{cal} kcal</span>
               {elev > 0 && <span>↑{elev}m</span>}
             </div>
-          </div>
+          </Link>
         );
       })}
 
