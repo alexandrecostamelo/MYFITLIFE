@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { FoodSubstituteModal } from '@/components/food-substitute-modal';
 import { Plus, Trash2, Loader2, Camera, Replace } from 'lucide-react';
+import { FirstTimeTooltip } from '@/components/help/first-time-tooltip';
 
 type Food = {
   id: string;
@@ -143,12 +144,19 @@ export default function NutritionPage() {
       <Card className="mb-4 p-4">
         <h2 className="mb-3 text-sm font-medium">Adicionar rápido</h2>
         <div className="grid grid-cols-2 gap-2">
+          <FirstTimeTooltip
+            id="nutrition-photo"
+            title="Foto de Refeição"
+            description="Tire uma foto do seu prato e a IA identifica os alimentos e calcula os macros automaticamente!"
+            position="top"
+          >
           <Button asChild variant="outline" className="h-auto flex-col gap-1 py-3">
             <Link href="/app/nutrition/photo">
               <Camera className="h-5 w-5" />
               <span className="text-xs">Por foto (IA)</span>
             </Link>
           </Button>
+          </FirstTimeTooltip>
           <Button variant="outline" onClick={() => setSubstituteOpen(true)} className="h-auto flex-col gap-1 py-3">
             <Replace className="h-5 w-5" />
             <span className="text-xs">Substituir alimento</span>

@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CoachAvatar } from '@/components/ui/coach-avatar';
 import { getPersona } from '@/lib/ai/personas';
+import { FirstTimeTooltip } from '@/components/help/first-time-tooltip';
 
 interface Props {
   name: string;
@@ -131,6 +132,12 @@ export function DashboardClient(props: Props) {
       </header>
 
       {/* Activity Rings + Configurable Metrics */}
+      <FirstTimeTooltip
+        id="dashboard-rings"
+        title="Anéis de Atividade"
+        description="Seus anéis mostram o progresso diário: treino, nutrição e check-in. Complete todos para manter seu streak!"
+        position="bottom"
+      >
       <section className="glass-card p-5 flex flex-col items-center">
         <ActivityRings
           rings={props.rings}
@@ -143,6 +150,7 @@ export function DashboardClient(props: Props) {
           ))}
         </div>
       </section>
+      </FirstTimeTooltip>
 
       {/* Week Strip */}
       <section className="glass-card p-4">

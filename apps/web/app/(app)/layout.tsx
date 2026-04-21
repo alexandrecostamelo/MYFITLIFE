@@ -5,6 +5,7 @@ import { PushBootstrap } from '@/components/push-bootstrap';
 import { HealthAutoSync } from '@/components/health/auto-sync';
 import { OfflineSync } from '@/components/offline/offline-sync';
 import { PostHogProvider } from '@/components/analytics/posthog-provider';
+import { HelpAssistant } from '@/components/help/help-assistant';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
@@ -29,6 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <PostHogProvider>{children}</PostHogProvider>
       </Suspense>
       <BottomNav />
+      <HelpAssistant />
     </div>
   );
 }

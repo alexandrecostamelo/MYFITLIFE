@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Play, Plus, Check, Loader2, Search, Camera, Dumbbell, Sparkles, ArrowLeft } from 'lucide-react';
 import { ExerciseVideo } from '@/components/exercise-video';
+import { FirstTimeTooltip } from '@/components/help/first-time-tooltip';
 
 type Exercise = {
   id: string;
@@ -159,9 +160,16 @@ export default function WorkoutPage() {
           </Card>
 
           <Card className="mb-4 p-4">
-            <Button onClick={startWorkout} disabled={loading} className="w-full">
-              <Play className="mr-2 h-4 w-4" /> Iniciar treino
-            </Button>
+            <FirstTimeTooltip
+              id="workout-start"
+              title="Comece seu treino"
+              description="Clique para iniciar e depois busque exercícios para adicionar. A IA sugere séries baseadas no seu histórico!"
+              position="top"
+            >
+              <Button onClick={startWorkout} disabled={loading} className="w-full">
+                <Play className="mr-2 h-4 w-4" /> Iniciar treino
+              </Button>
+            </FirstTimeTooltip>
           </Card>
 
           <h2 className="mb-2 text-sm font-medium text-muted-foreground">HISTÓRICO</h2>
