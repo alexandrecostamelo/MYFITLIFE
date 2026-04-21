@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Clock, Users, Check, Loader2, X } from 'lucide-react';
+import { Clock, Users, Check, Loader2, X, UserCheck } from 'lucide-react';
 
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -76,7 +76,7 @@ export function GymClassesClient({
       (b) =>
         String(b.class_id) === classId &&
         String(b.class_date) === targetDate &&
-        (String(b.status) === 'confirmed' || String(b.status) === 'waitlist'),
+        ['confirmed', 'waitlist', 'attended'].includes(String(b.status)),
     );
 
   const book = async (classId: string) => {
@@ -100,6 +100,19 @@ export function GymClassesClient({
     setLoading(null);
     router.refresh();
   };
+
+  const attend = async (bookingId: string) => {
+    setLoading('attend-' + bookingId);
+    await fetch('/api/gym-classes/attend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: bookingId }),
+    });
+    setLoading(null);
+    router.refresh();
+  };
+
+  const todayDate = weekDates[0];
 
   return (
     <main className="mx-auto max-w-lg px-4 pt-4 pb-28 space-y-4">
@@ -189,6 +202,7 @@ export function GymClassesClient({
           const bookingId = booking ? String(booking.id) : null;
           const isBooked = bookingStatus === 'confirmed';
           const isWaitlisted = bookingStatus === 'waitlist';
+          const isAttended = bookingStatus === 'attended';
 
           return (
             <div
@@ -223,12 +237,35 @@ export function GymClassesClient({
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  {isBooked ? (
+                  {isAttended ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20 text-accent text-[10px] font-medium">
+                      <UserCheck className="h-3 w-3" />
+                      Presente
+                    </span>
+                  ) : isBooked ? (
                     <>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20 text-accent text-[10px] font-medium">
                         <Check className="h-3 w-3" />
                         Reservado
                       </span>
+                      {targetDate === todayDate && bookingId && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => attend(bookingId)}
+                          disabled={loading === 'attend-' + bookingId}
+                          className="text-[10px] h-6 px-2"
+                        >
+                          {loading === 'attend-' + bookingId ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <>
+                              <UserCheck className="h-3 w-3 mr-0.5" />
+                              Presença
+                            </>
+                          )}
+                        </Button>
+                      )}
                       <button
                         onClick={() => bookingId && cancel(bookingId)}
                         disabled={loading === bookingId}

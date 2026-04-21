@@ -1,6 +1,9 @@
 import { getHealthBridge, type HealthMetric, type HealthSample } from './bridge';
 import { createClient } from '@/lib/supabase/client';
 
+const SYNC_COOLDOWN_MS = 60_000; // 1 minute between syncs per user
+const lastSyncTime: Record<string, number> = {};
+
 const METRICS_TO_SYNC: HealthMetric[] = [
   'steps',
   'heart_rate',
@@ -15,11 +18,18 @@ const METRICS_TO_SYNC: HealthMetric[] = [
 export async function syncHealth(
   userId: string
 ): Promise<{ synced: number; errors: number }> {
+  const now = Date.now();
+  if (lastSyncTime[userId] && now - lastSyncTime[userId] < SYNC_COOLDOWN_MS) {
+    return { synced: 0, errors: 0 };
+  }
+
   const bridge = getHealthBridge();
   if (!bridge) return { synced: 0, errors: 0 };
 
   const available = await bridge.isAvailable();
   if (!available) return { synced: 0, errors: 0 };
+
+  lastSyncTime[userId] = now;
 
   const supabase = createClient();
   const endDate = new Date();

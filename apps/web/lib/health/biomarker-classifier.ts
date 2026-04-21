@@ -29,13 +29,8 @@ export async function classifyBiomarkers(
     .maybeSingle();
 
   const profileRec = profile as Record<string, unknown> | null;
-  const gender = String(profileRec?.gender || 'any');
-  const sex =
-    gender === 'masculino' || gender === 'male'
-      ? 'male'
-      : gender === 'feminino' || gender === 'female'
-        ? 'female'
-        : 'any';
+  const gender = String(profileRec?.gender || '');
+  const sex = gender === 'male' ? 'male' : gender === 'female' ? 'female' : 'any';
 
   const birthDate = profileRec?.birth_date
     ? new Date(String(profileRec.birth_date))

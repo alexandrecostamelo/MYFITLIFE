@@ -99,6 +99,19 @@ export async function POST(req: NextRequest) {
     // non-critical
   }
 
+  // Write to native Health (Apple Health / Google Health Connect)
+  try {
+    const { writeWorkoutToHealth } = await import('@/lib/health/sync');
+    writeWorkoutToHealth({
+      type: 'cardio',
+      startDate: startedAt,
+      endDate: endedAt,
+      calories: Number(body.calories_estimated) || 0,
+    }).catch(() => null);
+  } catch {
+    // non-critical
+  }
+
   return NextResponse.json({
     ok: true,
     session_id: sessionId,

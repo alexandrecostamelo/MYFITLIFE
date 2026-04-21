@@ -14,7 +14,8 @@ export type HeartbeatJob =
   | 'unpause_subscriptions'
   | 'apply_scheduled_changes'
   | 'challenges_status'
-  | 'video_rooms_cleanup';
+  | 'video_rooms_cleanup'
+  | 'class_reminders';
 
 const URL_MAP: Record<HeartbeatJob, string | undefined> = {
   autopilot: process.env.HEARTBEAT_AUTOPILOT_URL,
@@ -33,6 +34,7 @@ const URL_MAP: Record<HeartbeatJob, string | undefined> = {
   apply_scheduled_changes: process.env.HEARTBEAT_APPLY_SCHEDULED_CHANGES_URL,
   challenges_status: process.env.HEARTBEAT_CHALLENGES_STATUS_URL,
   video_rooms_cleanup: process.env.HEARTBEAT_VIDEO_ROOMS_CLEANUP_URL,
+  class_reminders: process.env.HEARTBEAT_CLASS_REMINDERS_URL,
 };
 
 export async function sendHeartbeat(

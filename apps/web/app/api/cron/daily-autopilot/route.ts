@@ -33,8 +33,35 @@ export async function GET(req: NextRequest) {
 
     console.log(`[cron/daily-autopilot] Gerando para ${usersToGenerate.length} usuários`);
 
+    // Cache readiness & sleep scores for active users (avoids heavy queries on page load)
+    let cached = 0;
+    const { calculateReadiness } = await import('@/lib/health/readiness');
+    const { calculateSleepScore } = await import('@/lib/health/sleep-score');
+
+    for (const u of usersToGenerate) {
+      try {
+        const [readiness, sleep] = await Promise.all([
+          calculateReadiness(u.user_id),
+          calculateSleepScore(u.user_id),
+        ]);
+        await supabase
+          .from('profiles')
+          .update({
+            cached_sleep_score: sleep.total,
+            cached_readiness_score: readiness.score,
+            cached_readiness_zone: readiness.zone,
+            cached_scores_at: new Date().toISOString(),
+          } as Record<string, unknown>)
+          .eq('id', u.user_id);
+        cached++;
+      } catch {
+        // non-critical — scores will be calculated on-demand
+      }
+    }
+
     return NextResponse.json({
       triggered: usersToGenerate.length,
+      cached,
       message: 'Autopilots serão gerados sob demanda quando o usuário abrir o app',
     });
   });

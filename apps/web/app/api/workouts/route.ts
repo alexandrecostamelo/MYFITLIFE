@@ -118,6 +118,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Write to native Health (Apple Health / Google Health Connect)
+    try {
+      const { writeWorkoutToHealth } = await import('@/lib/health/sync');
+      const startDate = log ? new Date(log.started_at) : new Date(Date.now() - duration * 1000);
+      writeWorkoutToHealth({
+        type: 'strength',
+        startDate,
+        endDate: now,
+        calories: Math.round(duration / 60 * 5),
+      }).catch(() => null);
+    } catch {
+      // non-critical
+    }
+
     return NextResponse.json({ ok: true });
   }
 

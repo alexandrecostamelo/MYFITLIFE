@@ -39,6 +39,7 @@ export const XP_REWARDS = {
   EQUIPMENT_SCAN: { xp: 15, dimension: 'strength' as Dimension },
   GYM_CREATED: { xp: 25, dimension: 'consistency' as Dimension },
   PROGRESS_PHOTO: { xp: 20, dimension: 'consistency' as Dimension },
+  CLASS_ATTENDED: { xp: 30, dimension: 'consistency' as Dimension },
 } as const;
 
 export type XpEvent = keyof typeof XP_REWARDS;
